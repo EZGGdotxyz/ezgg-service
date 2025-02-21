@@ -1,0 +1,116 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider     = "mysql"
+  url          = env("DATABASE_URL")
+  relationMode = "prisma"
+}
+
+generator zod {
+  provider                     = "zod-prisma-types"
+  writeDocumentationAsDescribe = "true"
+  createInputTypes             = "false"
+}
+
+model SysUser {
+  /// 主键
+  id       Int      @id @default(autoincrement()) @db.UnsignedInt
+  /// 是否删除 @zod.custom.omit(["model"])
+  deleted  Int      @default(0) @db.UnsignedInt
+  /// 创建人 id
+  createBy Int      @default(0) @db.UnsignedInt
+  /// 修改人 id
+  updateBy Int      @default(0) @db.UnsignedInt
+  /// 创建时间
+  createAt DateTime @default(now())
+  /// 修改时间
+  updateAt DateTime @default(now()) @updatedAt
+  /// 删除时间
+  deleteAt Int      @default(0) @db.UnsignedInt
+
+  /// 管理员
+  name     String  @db.VarChar(32)
+  /// 用户账户
+  username String  @unique @db.VarChar(64)
+  /// 密码
+  password String  @db.VarChar(255)
+  /// 手机号码
+  phone    String? @unique @db.VarChar(32)
+  /// 电子邮箱
+  mail     String? @unique @db.VarChar(255)
+  /// 备注信息
+  remark   String? @db.VarChar(255)
+  /// 停用/启用标识；false 停用；true 启用
+  enabled  Boolean @default(true)
+
+  @@map("sys_user")
+}
+
+model Member {
+  /// 主键
+  id       Int      @id @default(autoincrement()) @db.UnsignedInt
+  /// 是否删除 @zod.custom.omit(["model"])
+  deleted  Int      @default(0) @db.UnsignedInt
+  /// 创建人 id
+  createBy Int      @default(0) @db.UnsignedInt
+  /// 修改人 id
+  updateBy Int      @default(0) @db.UnsignedInt
+  /// 创建时间
+  createAt DateTime @default(now())
+  /// 修改时间
+  updateAt DateTime @default(now()) @updatedAt
+  /// 删除时间
+  deleteAt Int      @default(0) @db.UnsignedInt
+
+  /// Privy User DID
+  did       String   @unique @db.VarChar(64)
+  /// Privy User 创建时间
+  createdAt DateTime
+  /// 昵称
+  nickname  String?  @db.VarChar(32)
+  /// 头像地址
+  avatar    String?  @db.VarChar(255)
+
+  MemberLinkedAccount MemberLinkedAccount[]
+}
+
+model MemberLinkedAccount {
+  /// 主键
+  id       Int      @id @default(autoincrement()) @db.UnsignedInt
+  /// 是否删除 @zod.custom.omit(["model"])
+  deleted  Int      @default(0) @db.UnsignedInt
+  /// 创建人 id
+  createBy Int      @default(0) @db.UnsignedInt
+  /// 修改人 id
+  updateBy Int      @default(0) @db.UnsignedInt
+  /// 创建时间
+  createAt DateTime @default(now())
+  /// 修改时间
+  updateAt DateTime @default(now()) @updatedAt
+  /// 删除时间
+  deleteAt Int      @default(0) @db.UnsignedInt
+
+  /// 用户id
+  memberId Int    @db.UnsignedInt
+  member   Member @relation(fields: [memberId], references: [id])
+
+  /// Privy User DID
+  did    String @unique @db.VarChar(64)
+  /// Privy User LinkedAccount的类型
+  type   String @db.VarChar(32)
+  /// Privy User 绑定账号详情JSON
+  detail String @db.Text
+  /// 从detail提取的用于检索的字段
+  search String @db.VarChar(255)
+
+  @@index([memberId])
+  @@index([search])
+}

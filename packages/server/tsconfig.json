@@ -1,0 +1,17 @@
+{
+  "extends": "fastify-tsconfig",
+  "compilerOptions": {
+    "outDir": "dist",
+    "sourceMap": true,
+    "moduleResolution": "NodeNext",
+    "module": "NodeNext",
+    "target": "ES2022",
+    "esModuleInterop": true,
+
+    // InversifyJS 需要开启的TS编译选项，需要开启支持装饰器
+    "types": ["reflect-metadata"],
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
+  },
+  "include": ["src/**/*.ts", "prisma/generated/zod/*.ts"]
+}
