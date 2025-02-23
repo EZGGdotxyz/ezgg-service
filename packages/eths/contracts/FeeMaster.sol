@@ -1,10 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {IERC20} from "@openzeppelin/contracts/interfaces/IERC20.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/interfaces/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 contract FeeMaster is Ownable {
+    error IncorrectFeeReceiver();
+
     enum FeeType {
         FIXED,
         PERCENT
@@ -21,10 +24,13 @@ contract FeeMaster is Ownable {
     mapping(address => FeeRule) feeRules;
 
     constructor(address initialOwner) Ownable(initialOwner) {
-        feeReceiver = initialOwner;
+        setFeeReceiver(initialOwner);
     }
 
     function setFeeReceiver(address _feeReceiver) public onlyOwner {
+        if (_feeReceiver == address(0)) {
+            revert IncorrectFeeReceiver();
+        }
         feeReceiver = _feeReceiver;
     }
 
@@ -37,10 +43,10 @@ contract FeeMaster is Ownable {
     }
 
     function feeCalculate(
-        address erc20Address,
+        IERC20 erc20,
         uint amount
     ) public view returns (uint, address) {
-        FeeRule memory feeRule = feeRules[erc20Address];
+        FeeRule memory feeRule = feeRules[address(erc20)];
         if (!feeRule.isSet) {
             feeRule = defaultRule;
         }

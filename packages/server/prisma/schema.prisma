@@ -80,6 +80,8 @@ model Member {
   avatar    String?  @db.VarChar(255)
 
   MemberLinkedAccount MemberLinkedAccount[]
+
+  @@map("member")
 }
 
 model MemberLinkedAccount {
@@ -113,4 +115,279 @@ model MemberLinkedAccount {
 
   @@index([memberId])
   @@index([search])
+  @@map("member_linked_account")
+}
+
+enum BlockChainPlatform {
+  ETH
+  SOLANA
+}
+
+enum BlockChainNetwork {
+  MAIN
+  TEST
+  DEV
+}
+
+enum ERC {
+  ERC20
+}
+
+enum BIZ {
+  LINK
+  VAULT
+  TRANSFER
+}
+
+/// 区块链信息
+model BlockChain {
+  /// 主键
+  id       Int      @id @default(autoincrement()) @db.UnsignedInt
+  /// 是否删除 @zod.custom.omit(["model"])
+  deleted  Int      @default(0) @db.UnsignedInt
+  /// 创建人 id
+  createBy Int      @default(0) @db.UnsignedInt
+  /// 修改人 id
+  updateBy Int      @default(0) @db.UnsignedInt
+  /// 创建时间
+  createAt DateTime @default(now())
+  /// 修改时间
+  updateAt DateTime @default(now()) @updatedAt
+  /// 删除时间
+  deleteAt Int      @default(0) @db.UnsignedInt
+
+  /// 区块链平台
+  platform BlockChainPlatform
+  /// 区块链id
+  chainId  Int
+  /// 区块链网络
+  network  BlockChainNetwork
+  /// 区块链名称
+  name     String
+  /// 是否在用户端展示
+  show     Boolean            @default(true)
+  /// 排序号
+  sort     Int
+
+  @@unique([platform, chainId])
+  @@map("block_chain")
+}
+
+/// 代币合约信息
+model TokenContract {
+  /// 主键
+  id       Int      @id @default(autoincrement()) @db.UnsignedInt
+  /// 是否删除 @zod.custom.omit(["model"])
+  deleted  Int      @default(0) @db.UnsignedInt
+  /// 创建人 id
+  createBy Int      @default(0) @db.UnsignedInt
+  /// 修改人 id
+  updateBy Int      @default(0) @db.UnsignedInt
+  /// 创建时间
+  createAt DateTime @default(now())
+  /// 修改时间
+  updateAt DateTime @default(now()) @updatedAt
+  /// 删除时间
+  deleteAt Int      @default(0) @db.UnsignedInt
+
+  /// 代币合约地址
+  address       String
+  /// 区块链平台
+  platform      BlockChainPlatform
+  /// 区块链id
+  chainId       Int
+  /// 区块链网络
+  network       BlockChainNetwork
+  /// 代币标准
+  erc           ERC
+  /// 代币名称
+  tokenName     String
+  /// 代币符号
+  tokenSymbol   String
+  /// 代币精度
+  tokenDecimals Int                @db.UnsignedInt
+
+  /// 是否在用户端展示
+  show Boolean @default(true)
+  /// 排序号
+  sort Int
+
+  @@unique([platform, chainId, tokenSymbol])
+  @@unique([platform, chainId, address])
+  @@map("token_contract")
+}
+
+/// 业务合约信息
+model BizContract {
+  /// 主键
+  id       Int      @id @default(autoincrement()) @db.UnsignedInt
+  /// 是否删除 @zod.custom.omit(["model"])
+  deleted  Int      @default(0) @db.UnsignedInt
+  /// 创建人 id
+  createBy Int      @default(0) @db.UnsignedInt
+  /// 修改人 id
+  updateBy Int      @default(0) @db.UnsignedInt
+  /// 创建时间
+  createAt DateTime @default(now())
+  /// 修改时间
+  updateAt DateTime @default(now()) @updatedAt
+  /// 删除时间
+  deleteAt Int      @default(0) @db.UnsignedInt
+
+  /// 业务合约地址
+  address  String
+  /// 区块链平台
+  platform BlockChainPlatform
+  /// 区块链id
+  chainId  Int
+  /// 区块链网络
+  network  BlockChainNetwork
+  /// 业务类型枚举
+  business BIZ
+  /// 是否启用
+  enabled  Boolean
+  /// 合约版本
+  ver      Int
+
+  @@unique([platform, chainId, business])
+  @@unique([platform, chainId, address])
+  @@map("biz_contract")
+}
+
+enum TransactionStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
+enum TransactionCategory {
+  SEND
+  REQUEST
+  DEPOSIT
+  WITHDRAW
+}
+
+enum TransactionType {
+  SEND
+  REQUEST
+  DEPOSIT
+  WITHDRAW
+  PAY_LINK
+  QR_CODE
+}
+
+/// 交易历史记录
+model TransactionHistory {
+  /// 主键
+  id       Int      @id @default(autoincrement()) @db.UnsignedInt
+  /// 是否删除 @zod.custom.omit(["model"])
+  deleted  Int      @default(0) @db.UnsignedInt
+  /// 创建人 id
+  createBy Int      @default(0) @db.UnsignedInt
+  /// 修改人 id
+  updateBy Int      @default(0) @db.UnsignedInt
+  /// 创建时间
+  createAt DateTime @default(now())
+  /// 修改时间
+  updateAt DateTime @default(now()) @updatedAt
+  /// 删除时间
+  deleteAt Int      @default(0) @db.UnsignedInt
+
+  /// 交易创建人 - 会员id
+  memberId Int @db.UnsignedInt
+
+  /// 交易分类
+  transactionCategory TransactionCategory
+  /// 交易类型
+  transactionType     TransactionType
+  /// 业务类型枚举
+  business            BIZ?
+  /// 业务合约地址
+  bizContractAddress  String?             @db.VarChar(255)
+
+  /// 付款人 - 会员id
+  senderMemberId      Int?    @db.UnsignedInt
+  /// 付款人 - Privy 用户id
+  senderDid           String?
+  /// 付款人 - 钱包地址
+  senderWalletAddress String? @db.VarChar(255)
+
+  /// 收款人 - 会员id
+  receiverMemberId      Int?    @db.UnsignedInt
+  /// 收款人 - Privy 用户id
+  receiverDid           String?
+  /// 收款人 - 钱包地址
+  receiverWalletAddress String? @db.VarChar(255)
+
+  /// 交易状态：PENDING 待支付；ACCEPTED 已支付；DECLINED 已拒绝；
+  transactionStatus    TransactionStatus
+  /// 交易发起时间
+  transactionTime      DateTime          @db.DateTime(3)
+  /// 交易确认时间
+  transactionConfirmAt DateTime?         @db.DateTime(3)
+  /// 交易哈希
+  transactionHash      String?           @db.VarChar(255)
+
+  /// 区块链平台
+  platform             BlockChainPlatform
+  /// 区块链id
+  chainId              Int
+  /// 区块链网络
+  network              BlockChainNetwork
+  /// 代币符号
+  tokenSymbol          String
+  /// 代币精度
+  tokenDecimals        Int                @db.UnsignedInt
+  /// 代币合约地址
+  tokenContractAddress String             @db.VarChar(255)
+
+  /// 交易金额（代币数量）
+  amount     Int @db.UnsignedInt
+  /// 网络费用（代币数量）
+  networkFee Int @db.UnsignedInt
+
+  /// 附带留言
+  message String? @db.VarChar(255)
+
+  @@unique([platform, chainId, transactionHash])
+  @@map("transaction_history")
+}
+
+model PayLink {
+  /// 主键
+  id       Int      @id @default(autoincrement()) @db.UnsignedInt
+  /// 是否删除 @zod.custom.omit(["model"])
+  deleted  Int      @default(0) @db.UnsignedInt
+  /// 创建人 id
+  createBy Int      @default(0) @db.UnsignedInt
+  /// 修改人 id
+  updateBy Int      @default(0) @db.UnsignedInt
+  /// 创建时间
+  createAt DateTime @default(now())
+  /// 修改时间
+  updateAt DateTime @default(now()) @updatedAt
+  /// 删除时间
+  deleteAt Int      @default(0) @db.UnsignedInt
+
+  // 交易历史id
+  transactionHistoryId Int @unique @db.UnsignedInt
+
+  /// 区块链平台
+  platform             BlockChainPlatform
+  /// 区块链id
+  chainId              Int
+  /// 区块链网络
+  network              BlockChainNetwork
+  /// 代币符号
+  tokenSymbol          String
+  /// 代币合约地址
+  tokenContractAddress String             @db.VarChar(255)
+  /// 付款人 - 钱包地址
+  senderWalletAddress  String             @db.VarChar(255)
+  /// 业务合约地址
+  bizContractAddress   String             @db.VarChar(255)
+  /// OTP
+  otp                  String             @db.VarChar(255)
+  /// 交易哈希
+  transactionHash      String?            @db.VarChar(255)
 }

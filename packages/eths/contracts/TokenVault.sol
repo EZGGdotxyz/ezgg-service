@@ -1,17 +1,37 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {FeeRequired} from "./FeeRequired.sol";
-import {TokenPayable} from "./TokenPayable.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/interfaces/IERC20.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "./FeeRequired.sol";
+import "./FeeMaster.sol";
+import "./TokenPayable.sol";
 
-contract TokenVault is Ownable, TokenPayable, FeeRequired {
+contract TokenVault is Ownable, TokenPayable, FeeRequired, ReentrancyGuard {
+    event VaultDeposit(
+        uint256 time,
+        address from,
+        address to,
+        address erc20,
+        uint amount,
+        uint fee
+    );
+
+    event VaultWithdraw(
+        uint256 time,
+        address from,
+        address to,
+        address erc20,
+        uint amount
+    );
+
     // 用户暂存库余额记录
     mapping(address => mapping(address => uint)) tokenBalance;
 
     constructor(
         address initialOwner,
-        address feeMaster
+        FeeMaster feeMaster
     ) Ownable(initialOwner) FeeRequired(feeMaster) {}
 
     /**
@@ -20,7 +40,7 @@ contract TokenVault is Ownable, TokenPayable, FeeRequired {
      *
      * @param feeMaster 手续费管理合约地址
      */
-    function setFeeMaster(address feeMaster) public onlyOwner {
+    function setFeeMaster(FeeMaster feeMaster) public onlyOwner {
         _setFeeMaster(feeMaster);
     }
 
@@ -28,36 +48,51 @@ contract TokenVault is Ownable, TokenPayable, FeeRequired {
      *
      * （需要ERC20预授信）将预授信的ERC20代币存入当前合约
      *
-     * @param erc20Address ERC20代币合约地址
+     * @param erc20 ERC20代币合约
      * @param amount 存入金额
      */
-    function deposit(
-        address erc20Address,
-        uint amount
-    ) public receiver(erc20Address, amount) {
+    function deposit(IERC20 erc20, uint amount) public receiver(erc20, amount) {
         // 计算并支付手续费
-        (uint fee, ) = collectFee(erc20Address, amount);
-        // 更新代币余额
-        tokenBalance[msg.sender][erc20Address] += amount - fee;
+        (uint fee, ) = _collectFee(erc20, amount);
+        // 更新代币余额_collectFee
+        uint amountWithoutFee = amount - fee;
+        tokenBalance[msg.sender][address(erc20)] += amountWithoutFee;
+
+        emit VaultDeposit(
+            block.timestamp,
+            msg.sender,
+            address(this),
+            address(erc20),
+            amountWithoutFee,
+            fee
+        );
     }
 
     /**
      *
      * 从当前合约提取指定数量代币
      *
-     * @param erc20Address ERC20代币合约地址
+     * @param erc20 ERC20代币合约地址
      * @param amount 存入金额
      */
-    function withdraw(address erc20Address, uint amount) public {
+    function withdraw(IERC20 erc20, uint amount) public nonReentrant {
         // 检查提款数额是否超过已存入代币余额
-        uint deposited = tokenBalance[msg.sender][erc20Address];
+        uint deposited = tokenBalance[msg.sender][address(erc20)];
         if (amount > deposited) {
             revert OutOfBalance();
         }
         // 更新代币余额
-        tokenBalance[msg.sender][erc20Address] -= amount;
+        tokenBalance[msg.sender][address(erc20)] -= amount;
         // 发起转账
-        _transfer(msg.sender, erc20Address, amount);
+        _transfer(msg.sender, erc20, amount);
+
+        emit VaultWithdraw(
+            block.timestamp,
+            address(this),
+            msg.sender,
+            address(erc20),
+            amount
+        );
     }
 
     /**

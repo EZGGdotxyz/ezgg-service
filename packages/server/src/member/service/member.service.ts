@@ -121,6 +121,19 @@ export class MemberService {
     };
   }
 
+  async findMember({ id }: { id: number }): Promise<Member | null> {
+    return this.prisma.member.findUnique({ where: { id } });
+  }
+
+  async findSmartWalletAddress({
+    did,
+  }: {
+    did: string;
+  }): Promise<string | null> {
+    const user = await this.privy.getUserById(did);
+    return user.smartWallet?.address ?? null;
+  }
+
   private searchOf({ type, ...rest }: LinkedAccountWithMetadata): string {
     switch (type) {
       case "wallet":

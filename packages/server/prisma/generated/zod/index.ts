@@ -1,32 +1,282 @@
-import { z } from 'zod';
-import type { Prisma } from '@prisma/client';
+import { z } from "zod";
 
 /////////////////////////////////////////
 // HELPER FUNCTIONS
 /////////////////////////////////////////
 
-
 /////////////////////////////////////////
 // ENUMS
 /////////////////////////////////////////
 
-export const TransactionIsolationLevelSchema = z.enum(['ReadUncommitted','ReadCommitted','RepeatableRead','Serializable']);
+export const TransactionIsolationLevelSchema = z.enum([
+  "ReadUncommitted",
+  "ReadCommitted",
+  "RepeatableRead",
+  "Serializable",
+]);
 
-export const SysUserScalarFieldEnumSchema = z.enum(['id','deleted','createBy','updateBy','createAt','updateAt','deleteAt','name','username','password','phone','mail','remark','enabled']);
+export const SysUserScalarFieldEnumSchema = z.enum([
+  "id",
+  "deleted",
+  "createBy",
+  "updateBy",
+  "createAt",
+  "updateAt",
+  "deleteAt",
+  "name",
+  "username",
+  "password",
+  "phone",
+  "mail",
+  "remark",
+  "enabled",
+]);
 
-export const MemberScalarFieldEnumSchema = z.enum(['id','deleted','createBy','updateBy','createAt','updateAt','deleteAt','did','createdAt','nickname','avatar']);
+export const MemberScalarFieldEnumSchema = z.enum([
+  "id",
+  "deleted",
+  "createBy",
+  "updateBy",
+  "createAt",
+  "updateAt",
+  "deleteAt",
+  "did",
+  "createdAt",
+  "nickname",
+  "avatar",
+]);
 
-export const MemberLinkedAccountScalarFieldEnumSchema = z.enum(['id','deleted','createBy','updateBy','createAt','updateAt','deleteAt','memberId','did','type','detail','search']);
+export const MemberLinkedAccountScalarFieldEnumSchema = z.enum([
+  "id",
+  "deleted",
+  "createBy",
+  "updateBy",
+  "createAt",
+  "updateAt",
+  "deleteAt",
+  "memberId",
+  "did",
+  "type",
+  "detail",
+  "search",
+]);
 
-export const SortOrderSchema = z.enum(['asc','desc']);
+export const BlockChainScalarFieldEnumSchema = z.enum([
+  "id",
+  "deleted",
+  "createBy",
+  "updateBy",
+  "createAt",
+  "updateAt",
+  "deleteAt",
+  "platform",
+  "chainId",
+  "network",
+  "name",
+  "show",
+  "sort",
+]);
 
-export const NullsOrderSchema = z.enum(['first','last']);
+export const TokenContractScalarFieldEnumSchema = z.enum([
+  "id",
+  "deleted",
+  "createBy",
+  "updateBy",
+  "createAt",
+  "updateAt",
+  "deleteAt",
+  "address",
+  "platform",
+  "chainId",
+  "network",
+  "erc",
+  "tokenName",
+  "tokenSymbol",
+  "tokenDecimals",
+  "show",
+  "sort",
+]);
 
-export const SysUserOrderByRelevanceFieldEnumSchema = z.enum(['name','username','password','phone','mail','remark']);
+export const BizContractScalarFieldEnumSchema = z.enum([
+  "id",
+  "deleted",
+  "createBy",
+  "updateBy",
+  "createAt",
+  "updateAt",
+  "deleteAt",
+  "address",
+  "platform",
+  "chainId",
+  "network",
+  "business",
+  "enabled",
+  "ver",
+]);
 
-export const MemberOrderByRelevanceFieldEnumSchema = z.enum(['did','nickname','avatar']);
+export const TransactionHistoryScalarFieldEnumSchema = z.enum([
+  "id",
+  "deleted",
+  "createBy",
+  "updateBy",
+  "createAt",
+  "updateAt",
+  "deleteAt",
+  "memberId",
+  "transactionCategory",
+  "transactionType",
+  "business",
+  "bizContractAddress",
+  "senderMemberId",
+  "senderDid",
+  "senderWalletAddress",
+  "receiverMemberId",
+  "receiverDid",
+  "receiverWalletAddress",
+  "transactionStatus",
+  "transactionTime",
+  "transactionConfirmAt",
+  "transactionHash",
+  "platform",
+  "chainId",
+  "network",
+  "tokenSymbol",
+  "tokenDecimals",
+  "tokenContractAddress",
+  "amount",
+  "networkFee",
+  "message",
+]);
 
-export const MemberLinkedAccountOrderByRelevanceFieldEnumSchema = z.enum(['did','type','detail','search']);
+export const PayLinkScalarFieldEnumSchema = z.enum([
+  "id",
+  "deleted",
+  "createBy",
+  "updateBy",
+  "createAt",
+  "updateAt",
+  "deleteAt",
+  "transactionHistoryId",
+  "platform",
+  "chainId",
+  "network",
+  "tokenSymbol",
+  "tokenContractAddress",
+  "senderWalletAddress",
+  "bizContractAddress",
+  "otp",
+  "transactionHash",
+]);
+
+export const SortOrderSchema = z.enum(["asc", "desc"]);
+
+export const NullsOrderSchema = z.enum(["first", "last"]);
+
+export const SysUserOrderByRelevanceFieldEnumSchema = z.enum([
+  "name",
+  "username",
+  "password",
+  "phone",
+  "mail",
+  "remark",
+]);
+
+export const MemberOrderByRelevanceFieldEnumSchema = z.enum([
+  "did",
+  "nickname",
+  "avatar",
+]);
+
+export const MemberLinkedAccountOrderByRelevanceFieldEnumSchema = z.enum([
+  "did",
+  "type",
+  "detail",
+  "search",
+]);
+
+export const BlockChainOrderByRelevanceFieldEnumSchema = z.enum(["name"]);
+
+export const TokenContractOrderByRelevanceFieldEnumSchema = z.enum([
+  "address",
+  "tokenName",
+  "tokenSymbol",
+]);
+
+export const BizContractOrderByRelevanceFieldEnumSchema = z.enum(["address"]);
+
+export const TransactionHistoryOrderByRelevanceFieldEnumSchema = z.enum([
+  "bizContractAddress",
+  "senderDid",
+  "senderWalletAddress",
+  "receiverDid",
+  "receiverWalletAddress",
+  "transactionHash",
+  "tokenSymbol",
+  "tokenContractAddress",
+  "message",
+]);
+
+export const PayLinkOrderByRelevanceFieldEnumSchema = z.enum([
+  "tokenSymbol",
+  "tokenContractAddress",
+  "senderWalletAddress",
+  "bizContractAddress",
+  "otp",
+  "transactionHash",
+]);
+
+export const BlockChainPlatformSchema = z.enum(["ETH", "SOLANA"]);
+
+export type BlockChainPlatformType = `${z.infer<
+  typeof BlockChainPlatformSchema
+>}`;
+
+export const BlockChainNetworkSchema = z.enum(["MAIN", "TEST", "DEV"]);
+
+export type BlockChainNetworkType = `${z.infer<
+  typeof BlockChainNetworkSchema
+>}`;
+
+export const ERCSchema = z.enum(["ERC20"]);
+
+export type ERCType = `${z.infer<typeof ERCSchema>}`;
+
+export const BIZSchema = z.enum(["LINK", "VAULT", "TRANSFER"]);
+
+export type BIZType = `${z.infer<typeof BIZSchema>}`;
+
+export const TransactionStatusSchema = z.enum([
+  "PENDING",
+  "ACCEPTED",
+  "DECLINED",
+]);
+
+export type TransactionStatusType = `${z.infer<
+  typeof TransactionStatusSchema
+>}`;
+
+export const TransactionCategorySchema = z.enum([
+  "SEND",
+  "REQUEST",
+  "DEPOSIT",
+  "WITHDRAW",
+]);
+
+export type TransactionCategoryType = `${z.infer<
+  typeof TransactionCategorySchema
+>}`;
+
+export const TransactionTypeSchema = z.enum([
+  "SEND",
+  "REQUEST",
+  "DEPOSIT",
+  "WITHDRAW",
+  "PAY_LINK",
+  "QR_CODE",
+]);
+
+export type TransactionTypeType = `${z.infer<typeof TransactionTypeSchema>}`;
+
 /////////////////////////////////////////
 // MODELS
 /////////////////////////////////////////
@@ -89,12 +339,12 @@ export const SysUserSchema = z.object({
    */
   remark: z.string().nullable().describe("备注信息"),
   /**
-   * 停用/启用标识；false 停用；true 启用
+   * 停用/启用标识；false 停���；true 启用
    */
-  enabled: z.boolean().describe("停用/启用标识；false 停用；true 启用"),
-})
+  enabled: z.boolean().describe("停用/启用标识；false 停���；true 启用"),
+});
 
-export type SysUser = z.infer<typeof SysUserSchema>
+export type SysUser = z.infer<typeof SysUserSchema>;
 
 /////////////////////////////////////////
 // MEMBER SCHEMA
@@ -145,9 +395,9 @@ export const MemberSchema = z.object({
    * 头像地址
    */
   avatar: z.string().nullable().describe("头像地址"),
-})
+});
 
-export type Member = z.infer<typeof MemberSchema>
+export type Member = z.infer<typeof MemberSchema>;
 
 /////////////////////////////////////////
 // MEMBER LINKED ACCOUNT SCHEMA
@@ -202,6 +452,430 @@ export const MemberLinkedAccountSchema = z.object({
    * 从detail提取的用于检索的字段
    */
   search: z.string().describe("从detail提取的用于检索的字段"),
-})
+});
 
-export type MemberLinkedAccount = z.infer<typeof MemberLinkedAccountSchema>
+export type MemberLinkedAccount = z.infer<typeof MemberLinkedAccountSchema>;
+
+/////////////////////////////////////////
+// BLOCK CHAIN SCHEMA
+/////////////////////////////////////////
+
+/**
+ * 区块链信息
+ */
+export const BlockChainSchema = z.object({
+  /**
+   * 区块链平台
+   */
+  platform: BlockChainPlatformSchema.describe("区块链平台"),
+  /**
+   * 区块链网络
+   */
+  network: BlockChainNetworkSchema.describe("区块链网络"),
+  /**
+   * 主键
+   */
+  id: z.number().int().describe("主键"),
+  /**
+   * 是否删除
+   */
+  // omitted: deleted: z.number().int().describe("是否删除"),
+  /**
+   * 创建人 id
+   */
+  createBy: z.number().int().describe("创建人 id"),
+  /**
+   * 修改人 id
+   */
+  updateBy: z.number().int().describe("修改人 id"),
+  /**
+   * 创建时间
+   */
+  createAt: z.coerce.date().describe("创建时间"),
+  /**
+   * 修改时间
+   */
+  updateAt: z.coerce.date().describe("修改时间"),
+  /**
+   * 删除时间
+   */
+  deleteAt: z.number().int().describe("删除时间"),
+  /**
+   * 区块链id
+   */
+  chainId: z.number().int().describe("区块链id"),
+  /**
+   * 区块链名称
+   */
+  name: z.string().describe("区块链名称"),
+  /**
+   * 是否在用户端展示
+   */
+  show: z.boolean().describe("是否在用户端展示"),
+  /**
+   * 排序号
+   */
+  sort: z.number().int().describe("排序号"),
+});
+
+export type BlockChain = z.infer<typeof BlockChainSchema>;
+
+/////////////////////////////////////////
+// TOKEN CONTRACT SCHEMA
+/////////////////////////////////////////
+
+/**
+ * 代币合约信息
+ */
+export const TokenContractSchema = z.object({
+  /**
+   * 区块链平台
+   */
+  platform: BlockChainPlatformSchema.describe("区块链平台"),
+  /**
+   * 区块链网络
+   */
+  network: BlockChainNetworkSchema.describe("区块链网络"),
+  /**
+   * 代币标准
+   */
+  erc: ERCSchema.describe("代币标准"),
+  /**
+   * 主键
+   */
+  id: z.number().int().describe("主键"),
+  /**
+   * 是否删除
+   */
+  // omitted: deleted: z.number().int().describe("是否删除"),
+  /**
+   * 创建人 id
+   */
+  createBy: z.number().int().describe("创建人 id"),
+  /**
+   * 修改人 id
+   */
+  updateBy: z.number().int().describe("修改人 id"),
+  /**
+   * 创建时间
+   */
+  createAt: z.coerce.date().describe("创建时间"),
+  /**
+   * 修改时间
+   */
+  updateAt: z.coerce.date().describe("修改时间"),
+  /**
+   * 删除时间
+   */
+  deleteAt: z.number().int().describe("删除时间"),
+  /**
+   * 代币合约地址
+   */
+  address: z.string().describe("代币合约地址"),
+  /**
+   * 区块链id
+   */
+  chainId: z.number().int().describe("区块链id"),
+  /**
+   * 代币名称
+   */
+  tokenName: z.string().describe("代币名称"),
+  /**
+   * 代币符号
+   */
+  tokenSymbol: z.string().describe("代币符号"),
+  /**
+   * 代币精度
+   */
+  tokenDecimals: z.number().int().describe("代币精度"),
+  /**
+   * 是否在用户端展示
+   */
+  show: z.boolean().describe("是否在用户端展示"),
+  /**
+   * 排序号
+   */
+  sort: z.number().int().describe("排序号"),
+});
+
+export type TokenContract = z.infer<typeof TokenContractSchema>;
+
+/////////////////////////////////////////
+// BIZ CONTRACT SCHEMA
+/////////////////////////////////////////
+
+/**
+ * 业务合约信息
+ */
+export const BizContractSchema = z.object({
+  /**
+   * 区块链平台
+   */
+  platform: BlockChainPlatformSchema.describe("区块链平台"),
+  /**
+   * 区块链网络
+   */
+  network: BlockChainNetworkSchema.describe("区块链网络"),
+  /**
+   * 业务类型枚举
+   */
+  business: BIZSchema.describe("业务类型枚举"),
+  /**
+   * 主键
+   */
+  id: z.number().int().describe("主键"),
+  /**
+   * 是否删除
+   */
+  // omitted: deleted: z.number().int().describe("是否删除"),
+  /**
+   * 创建人 id
+   */
+  createBy: z.number().int().describe("创建人 id"),
+  /**
+   * 修改人 id
+   */
+  updateBy: z.number().int().describe("修改人 id"),
+  /**
+   * 创建时间
+   */
+  createAt: z.coerce.date().describe("创建时间"),
+  /**
+   * 修改时间
+   */
+  updateAt: z.coerce.date().describe("修改时间"),
+  /**
+   * 删除时间
+   */
+  deleteAt: z.number().int().describe("删除时间"),
+  /**
+   * 业务合约地址
+   */
+  address: z.string().describe("业务合约地址"),
+  /**
+   * 区块链id
+   */
+  chainId: z.number().int().describe("区块链id"),
+  /**
+   * 是否启用
+   */
+  enabled: z.boolean().describe("是否启用"),
+  /**
+   * 合约版本
+   */
+  ver: z.number().int().describe("合约版本"),
+});
+
+export type BizContract = z.infer<typeof BizContractSchema>;
+
+/////////////////////////////////////////
+// TRANSACTION HISTORY SCHEMA
+/////////////////////////////////////////
+
+/**
+ * 交易历史记录
+ */
+export const TransactionHistorySchema = z.object({
+  /**
+   * 交易分类
+   */
+  transactionCategory: TransactionCategorySchema.describe("交易分类"),
+  /**
+   * 交易类型
+   */
+  transactionType: TransactionTypeSchema.describe("交易类型"),
+  /**
+   * 业务类型枚举
+   */
+  business: BIZSchema.nullable().describe("业务类型枚举"),
+  /**
+   * 交易状态：PENDING 待支付；ACCEPTED 已支付；DECLINED 已拒绝；
+   */
+  transactionStatus: TransactionStatusSchema.describe(
+    "交易状态：PENDING 待支付；ACCEPTED 已支付；DECLINED 已拒绝；"
+  ),
+  /**
+   * 区块链平台
+   */
+  platform: BlockChainPlatformSchema.describe("区块链平台"),
+  /**
+   * 区块链网络
+   */
+  network: BlockChainNetworkSchema.describe("区块链网络"),
+  /**
+   * 主键
+   */
+  id: z.number().int().describe("主键"),
+  /**
+   * 是否删除
+   */
+  // omitted: deleted: z.number().int().describe("是否删除"),
+  /**
+   * 创建人 id
+   */
+  createBy: z.number().int().describe("创建人 id"),
+  /**
+   * 修改人 id
+   */
+  updateBy: z.number().int().describe("修改人 id"),
+  /**
+   * 创建时间
+   */
+  createAt: z.coerce.date().describe("创建时间"),
+  /**
+   * 修改时间
+   */
+  updateAt: z.coerce.date().describe("修改时间"),
+  /**
+   * 删除时间
+   */
+  deleteAt: z.number().int().describe("删除时间"),
+  /**
+   * 交易创建人 - 会员id
+   */
+  memberId: z.number().int().describe("交易创建人 - 会员id"),
+  /**
+   * 业务合约地址
+   */
+  bizContractAddress: z.string().nullable().describe("业务合约地址"),
+  /**
+   * 付款人 - 会员id
+   */
+  senderMemberId: z.number().int().nullable().describe("付款人 - 会员id"),
+  /**
+   * 付款人 - Privy 用户id
+   */
+  senderDid: z.string().nullable().describe("付款人 - Privy 用户id"),
+  /**
+   * 付款人 - 钱包地址
+   */
+  senderWalletAddress: z.string().nullable().describe("付款人 - 钱包地址"),
+  /**
+   * 收款人 - 会员id
+   */
+  receiverMemberId: z.number().int().nullable().describe("收款人 - 会员id"),
+  /**
+   * 收款人 - Privy 用户id
+   */
+  receiverDid: z.string().nullable().describe("收款人 - Privy 用户id"),
+  /**
+   * 收款人 - 钱包地址
+   */
+  receiverWalletAddress: z.string().nullable().describe("收款人 - 钱包地址"),
+  /**
+   * 交易发起时间
+   */
+  transactionTime: z.coerce.date().describe("交易发起时间"),
+  /**
+   * 交易确认时间
+   */
+  transactionConfirmAt: z.coerce.date().nullable().describe("交易确认时间"),
+  /**
+   * 交易哈希
+   */
+  transactionHash: z.string().nullable().describe("交易哈希"),
+  /**
+   * 区块链id
+   */
+  chainId: z.number().int().describe("区块链id"),
+  /**
+   * 代币符号
+   */
+  tokenSymbol: z.string().describe("代币符号"),
+  /**
+   * 代币精度
+   */
+  tokenDecimals: z.number().int().describe("代币精度"),
+  /**
+   * 代币合约地址
+   */
+  tokenContractAddress: z.string().describe("代币合约地址"),
+  /**
+   * 交易金额（代币数量）
+   */
+  amount: z.number().int().describe("交易金额（代币数量）"),
+  /**
+   * 网络费用（代币数量）
+   */
+  networkFee: z.number().int().describe("网络费用（代币数量）"),
+  /**
+   * 附带留言
+   */
+  message: z.string().nullable().describe("附带留言"),
+});
+
+export type TransactionHistory = z.infer<typeof TransactionHistorySchema>;
+
+/////////////////////////////////////////
+// PAY LINK SCHEMA
+/////////////////////////////////////////
+
+export const PayLinkSchema = z.object({
+  /**
+   * 区块链平台
+   */
+  platform: BlockChainPlatformSchema.describe("区块链平台"),
+  /**
+   * 区块链网络
+   */
+  network: BlockChainNetworkSchema.describe("区块链网络"),
+  /**
+   * 主键
+   */
+  id: z.number().int().describe("主键"),
+  /**
+   * 是否删除
+   */
+  // omitted: deleted: z.number().int().describe("是否删除"),
+  /**
+   * 创建人 id
+   */
+  createBy: z.number().int().describe("创建人 id"),
+  /**
+   * 修改人 id
+   */
+  updateBy: z.number().int().describe("修改人 id"),
+  /**
+   * 创建时间
+   */
+  createAt: z.coerce.date().describe("创建时间"),
+  /**
+   * 修改时间
+   */
+  updateAt: z.coerce.date().describe("修改时间"),
+  /**
+   * 删除时间
+   */
+  deleteAt: z.number().int().describe("删除时间"),
+  transactionHistoryId: z.number().int(),
+  /**
+   * 区块链id
+   */
+  chainId: z.number().int().describe("区块链id"),
+  /**
+   * 代币符号
+   */
+  tokenSymbol: z.string().describe("代币符号"),
+  /**
+   * 代币合约地址
+   */
+  tokenContractAddress: z.string().describe("代币合约地址"),
+  /**
+   * 付款人 - 钱包地址
+   */
+  senderWalletAddress: z.string().describe("付款人 - 钱包地址"),
+  /**
+   * 业务合约地址
+   */
+  bizContractAddress: z.string().describe("业务合约地址"),
+  /**
+   * OTP
+   */
+  otp: z.string().describe("OTP"),
+  /**
+   * 交易哈希
+   */
+  transactionHash: z.string().nullable().describe("交易哈希"),
+});
+
+export type PayLink = z.infer<typeof PayLinkSchema>;
