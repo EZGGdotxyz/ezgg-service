@@ -20,6 +20,9 @@
     "db:studio": "prisma studio",
     "postinstall": "prisma generate"
   },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -56,12 +59,13 @@
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
-    "@types/node": "^22.1.0",
+    "@types/node": "^22.13.4",
     "c8": "^10.1.2",
     "concurrently": "^9.0.0",
     "fastify-tsconfig": "^2.0.0",
     "prisma": "^6.3.1",
     "ts-node": "^10.4.0",
+    "tsx": "^4.19.3",
     "typescript": "^5.2.2",
     "zod-prisma-types": "file:./vendor/zod-prisma-types/zod-prisma-types-v3.1.6.tgz"
   }

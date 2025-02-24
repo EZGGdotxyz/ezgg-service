@@ -23,7 +23,7 @@ const plugins: FastifyPluginAsync = async (fastify) => {
 
 const options: PluginMetadata = {
   name: "inversify",
-  dependencies: ["prisma"],
+  dependencies: ["prisma", "privy"],
 };
 
 export default fp(plugins, options);

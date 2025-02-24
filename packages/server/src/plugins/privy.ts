@@ -39,8 +39,7 @@ const plugins: FastifyPluginAsync = async (fastify) => {
         throw UNAUTHORIZED({ message: "User Info Required" });
       }
       try {
-        const user = await privy.getUser({ idToken: idToken });
-        fastify.decorateRequest("privyUser", user);
+        request.privyUser = await privy.getUser({ idToken: idToken });
       } catch (error) {
         fastify.log.warn(`Privy getUser failed with error ${error}.`);
         throw UNAUTHORIZED({ message: "User Info Incorrect" });

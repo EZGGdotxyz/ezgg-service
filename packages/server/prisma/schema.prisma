@@ -391,3 +391,46 @@ model PayLink {
   /// 交易哈希
   transactionHash      String?            @db.VarChar(255)
 }
+
+model Setting {
+  /// 主键
+  id       Int      @id @default(autoincrement()) @db.UnsignedInt
+  /// 是否删除 @zod.custom.omit(["model"])
+  deleted  Int      @default(0) @db.UnsignedInt
+  /// 创建人 id
+  createBy Int      @default(0) @db.UnsignedInt
+  /// 修改人 id
+  updateBy Int      @default(0) @db.UnsignedInt
+  /// 创建时间
+  createAt DateTime @default(now())
+  /// 修改时间
+  updateAt DateTime @default(now()) @updatedAt
+  /// 删除时间
+  deleteAt Int      @default(0) @db.UnsignedInt
+
+  ///  会员id
+  memberId Int @unique @db.UnsignedInt
+
+  /// 交易状态更新
+  notifyTransUpdate     Boolean @default(true) @db.UnsignedTinyInt
+  /// 欺诈或可疑活动报警
+  notifyAbnormalAlarm   Boolean @default(true) @db.UnsignedTinyInt
+  /// 付款请求通知
+  notifyPayRequest      Boolean @default(true) @db.UnsignedTinyInt
+  /// Card Activity Notification
+  notifyCardActivity    Boolean @default(true) @db.UnsignedTinyInt
+  /// 客户支持通知
+  notifyCustomerSupport Boolean @default(true) @db.UnsignedTinyInt
+  /// 账户余额警报
+  notifyBalanceAlarm    Boolean @default(true) @db.UnsignedTinyInt
+  /// 安全警报
+  notifySecureAlarm     Boolean @default(true) @db.UnsignedTinyInt
+  /// 每日或每周摘要
+  notifySummary         Boolean @default(true) @db.UnsignedTinyInt
+  /// 应用程序更新与增强
+  sysAppUpdate          Boolean @default(true) @db.UnsignedTinyInt
+  /// 促销优惠与更新
+  sysSalesPromotion     Boolean @default(true) @db.UnsignedTinyInt
+  /// 参与调研
+  sysSurvey             Boolean @default(true) @db.UnsignedTinyInt
+}

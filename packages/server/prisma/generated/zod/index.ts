@@ -1,281 +1,82 @@
-import { z } from "zod";
+import { z } from 'zod';
+import type { Prisma } from '@prisma/client';
 
 /////////////////////////////////////////
 // HELPER FUNCTIONS
 /////////////////////////////////////////
 
+
 /////////////////////////////////////////
 // ENUMS
 /////////////////////////////////////////
 
-export const TransactionIsolationLevelSchema = z.enum([
-  "ReadUncommitted",
-  "ReadCommitted",
-  "RepeatableRead",
-  "Serializable",
-]);
+export const TransactionIsolationLevelSchema = z.enum(['ReadUncommitted','ReadCommitted','RepeatableRead','Serializable']);
 
-export const SysUserScalarFieldEnumSchema = z.enum([
-  "id",
-  "deleted",
-  "createBy",
-  "updateBy",
-  "createAt",
-  "updateAt",
-  "deleteAt",
-  "name",
-  "username",
-  "password",
-  "phone",
-  "mail",
-  "remark",
-  "enabled",
-]);
+export const SysUserScalarFieldEnumSchema = z.enum(['id','deleted','createBy','updateBy','createAt','updateAt','deleteAt','name','username','password','phone','mail','remark','enabled']);
 
-export const MemberScalarFieldEnumSchema = z.enum([
-  "id",
-  "deleted",
-  "createBy",
-  "updateBy",
-  "createAt",
-  "updateAt",
-  "deleteAt",
-  "did",
-  "createdAt",
-  "nickname",
-  "avatar",
-]);
+export const MemberScalarFieldEnumSchema = z.enum(['id','deleted','createBy','updateBy','createAt','updateAt','deleteAt','did','createdAt','nickname','avatar']);
 
-export const MemberLinkedAccountScalarFieldEnumSchema = z.enum([
-  "id",
-  "deleted",
-  "createBy",
-  "updateBy",
-  "createAt",
-  "updateAt",
-  "deleteAt",
-  "memberId",
-  "did",
-  "type",
-  "detail",
-  "search",
-]);
+export const MemberLinkedAccountScalarFieldEnumSchema = z.enum(['id','deleted','createBy','updateBy','createAt','updateAt','deleteAt','memberId','did','type','detail','search']);
 
-export const BlockChainScalarFieldEnumSchema = z.enum([
-  "id",
-  "deleted",
-  "createBy",
-  "updateBy",
-  "createAt",
-  "updateAt",
-  "deleteAt",
-  "platform",
-  "chainId",
-  "network",
-  "name",
-  "show",
-  "sort",
-]);
+export const BlockChainScalarFieldEnumSchema = z.enum(['id','deleted','createBy','updateBy','createAt','updateAt','deleteAt','platform','chainId','network','name','show','sort']);
 
-export const TokenContractScalarFieldEnumSchema = z.enum([
-  "id",
-  "deleted",
-  "createBy",
-  "updateBy",
-  "createAt",
-  "updateAt",
-  "deleteAt",
-  "address",
-  "platform",
-  "chainId",
-  "network",
-  "erc",
-  "tokenName",
-  "tokenSymbol",
-  "tokenDecimals",
-  "show",
-  "sort",
-]);
+export const TokenContractScalarFieldEnumSchema = z.enum(['id','deleted','createBy','updateBy','createAt','updateAt','deleteAt','address','platform','chainId','network','erc','tokenName','tokenSymbol','tokenDecimals','show','sort']);
 
-export const BizContractScalarFieldEnumSchema = z.enum([
-  "id",
-  "deleted",
-  "createBy",
-  "updateBy",
-  "createAt",
-  "updateAt",
-  "deleteAt",
-  "address",
-  "platform",
-  "chainId",
-  "network",
-  "business",
-  "enabled",
-  "ver",
-]);
+export const BizContractScalarFieldEnumSchema = z.enum(['id','deleted','createBy','updateBy','createAt','updateAt','deleteAt','address','platform','chainId','network','business','enabled','ver']);
 
-export const TransactionHistoryScalarFieldEnumSchema = z.enum([
-  "id",
-  "deleted",
-  "createBy",
-  "updateBy",
-  "createAt",
-  "updateAt",
-  "deleteAt",
-  "memberId",
-  "transactionCategory",
-  "transactionType",
-  "business",
-  "bizContractAddress",
-  "senderMemberId",
-  "senderDid",
-  "senderWalletAddress",
-  "receiverMemberId",
-  "receiverDid",
-  "receiverWalletAddress",
-  "transactionStatus",
-  "transactionTime",
-  "transactionConfirmAt",
-  "transactionHash",
-  "platform",
-  "chainId",
-  "network",
-  "tokenSymbol",
-  "tokenDecimals",
-  "tokenContractAddress",
-  "amount",
-  "networkFee",
-  "message",
-]);
+export const TransactionHistoryScalarFieldEnumSchema = z.enum(['id','deleted','createBy','updateBy','createAt','updateAt','deleteAt','memberId','transactionCategory','transactionType','business','bizContractAddress','senderMemberId','senderDid','senderWalletAddress','receiverMemberId','receiverDid','receiverWalletAddress','transactionStatus','transactionTime','transactionConfirmAt','transactionHash','platform','chainId','network','tokenSymbol','tokenDecimals','tokenContractAddress','amount','networkFee','message']);
 
-export const PayLinkScalarFieldEnumSchema = z.enum([
-  "id",
-  "deleted",
-  "createBy",
-  "updateBy",
-  "createAt",
-  "updateAt",
-  "deleteAt",
-  "transactionHistoryId",
-  "platform",
-  "chainId",
-  "network",
-  "tokenSymbol",
-  "tokenContractAddress",
-  "senderWalletAddress",
-  "bizContractAddress",
-  "otp",
-  "transactionHash",
-]);
+export const PayLinkScalarFieldEnumSchema = z.enum(['id','deleted','createBy','updateBy','createAt','updateAt','deleteAt','transactionHistoryId','platform','chainId','network','tokenSymbol','tokenContractAddress','senderWalletAddress','bizContractAddress','otp','transactionHash']);
 
-export const SortOrderSchema = z.enum(["asc", "desc"]);
+export const SettingScalarFieldEnumSchema = z.enum(['id','deleted','createBy','updateBy','createAt','updateAt','deleteAt','memberId','notifyTransUpdate','notifyAbnormalAlarm','notifyPayRequest','notifyCardActivity','notifyCustomerSupport','notifyBalanceAlarm','notifySecureAlarm','notifySummary','sysAppUpdate','sysSalesPromotion','sysSurvey']);
 
-export const NullsOrderSchema = z.enum(["first", "last"]);
+export const SortOrderSchema = z.enum(['asc','desc']);
 
-export const SysUserOrderByRelevanceFieldEnumSchema = z.enum([
-  "name",
-  "username",
-  "password",
-  "phone",
-  "mail",
-  "remark",
-]);
+export const NullsOrderSchema = z.enum(['first','last']);
 
-export const MemberOrderByRelevanceFieldEnumSchema = z.enum([
-  "did",
-  "nickname",
-  "avatar",
-]);
+export const SysUserOrderByRelevanceFieldEnumSchema = z.enum(['name','username','password','phone','mail','remark']);
 
-export const MemberLinkedAccountOrderByRelevanceFieldEnumSchema = z.enum([
-  "did",
-  "type",
-  "detail",
-  "search",
-]);
+export const MemberOrderByRelevanceFieldEnumSchema = z.enum(['did','nickname','avatar']);
 
-export const BlockChainOrderByRelevanceFieldEnumSchema = z.enum(["name"]);
+export const MemberLinkedAccountOrderByRelevanceFieldEnumSchema = z.enum(['did','type','detail','search']);
 
-export const TokenContractOrderByRelevanceFieldEnumSchema = z.enum([
-  "address",
-  "tokenName",
-  "tokenSymbol",
-]);
+export const BlockChainOrderByRelevanceFieldEnumSchema = z.enum(['name']);
 
-export const BizContractOrderByRelevanceFieldEnumSchema = z.enum(["address"]);
+export const TokenContractOrderByRelevanceFieldEnumSchema = z.enum(['address','tokenName','tokenSymbol']);
 
-export const TransactionHistoryOrderByRelevanceFieldEnumSchema = z.enum([
-  "bizContractAddress",
-  "senderDid",
-  "senderWalletAddress",
-  "receiverDid",
-  "receiverWalletAddress",
-  "transactionHash",
-  "tokenSymbol",
-  "tokenContractAddress",
-  "message",
-]);
+export const BizContractOrderByRelevanceFieldEnumSchema = z.enum(['address']);
 
-export const PayLinkOrderByRelevanceFieldEnumSchema = z.enum([
-  "tokenSymbol",
-  "tokenContractAddress",
-  "senderWalletAddress",
-  "bizContractAddress",
-  "otp",
-  "transactionHash",
-]);
+export const TransactionHistoryOrderByRelevanceFieldEnumSchema = z.enum(['bizContractAddress','senderDid','senderWalletAddress','receiverDid','receiverWalletAddress','transactionHash','tokenSymbol','tokenContractAddress','message']);
 
-export const BlockChainPlatformSchema = z.enum(["ETH", "SOLANA"]);
+export const PayLinkOrderByRelevanceFieldEnumSchema = z.enum(['tokenSymbol','tokenContractAddress','senderWalletAddress','bizContractAddress','otp','transactionHash']);
 
-export type BlockChainPlatformType = `${z.infer<
-  typeof BlockChainPlatformSchema
->}`;
+export const BlockChainPlatformSchema = z.enum(['ETH','SOLANA']);
 
-export const BlockChainNetworkSchema = z.enum(["MAIN", "TEST", "DEV"]);
+export type BlockChainPlatformType = `${z.infer<typeof BlockChainPlatformSchema>}`
 
-export type BlockChainNetworkType = `${z.infer<
-  typeof BlockChainNetworkSchema
->}`;
+export const BlockChainNetworkSchema = z.enum(['MAIN','TEST','DEV']);
 
-export const ERCSchema = z.enum(["ERC20"]);
+export type BlockChainNetworkType = `${z.infer<typeof BlockChainNetworkSchema>}`
 
-export type ERCType = `${z.infer<typeof ERCSchema>}`;
+export const ERCSchema = z.enum(['ERC20']);
 
-export const BIZSchema = z.enum(["LINK", "VAULT", "TRANSFER"]);
+export type ERCType = `${z.infer<typeof ERCSchema>}`
 
-export type BIZType = `${z.infer<typeof BIZSchema>}`;
+export const BIZSchema = z.enum(['LINK','VAULT','TRANSFER']);
 
-export const TransactionStatusSchema = z.enum([
-  "PENDING",
-  "ACCEPTED",
-  "DECLINED",
-]);
+export type BIZType = `${z.infer<typeof BIZSchema>}`
 
-export type TransactionStatusType = `${z.infer<
-  typeof TransactionStatusSchema
->}`;
+export const TransactionStatusSchema = z.enum(['PENDING','ACCEPTED','DECLINED']);
 
-export const TransactionCategorySchema = z.enum([
-  "SEND",
-  "REQUEST",
-  "DEPOSIT",
-  "WITHDRAW",
-]);
+export type TransactionStatusType = `${z.infer<typeof TransactionStatusSchema>}`
 
-export type TransactionCategoryType = `${z.infer<
-  typeof TransactionCategorySchema
->}`;
+export const TransactionCategorySchema = z.enum(['SEND','REQUEST','DEPOSIT','WITHDRAW']);
 
-export const TransactionTypeSchema = z.enum([
-  "SEND",
-  "REQUEST",
-  "DEPOSIT",
-  "WITHDRAW",
-  "PAY_LINK",
-  "QR_CODE",
-]);
+export type TransactionCategoryType = `${z.infer<typeof TransactionCategorySchema>}`
 
-export type TransactionTypeType = `${z.infer<typeof TransactionTypeSchema>}`;
+export const TransactionTypeSchema = z.enum(['SEND','REQUEST','DEPOSIT','WITHDRAW','PAY_LINK','QR_CODE']);
+
+export type TransactionTypeType = `${z.infer<typeof TransactionTypeSchema>}`
 
 /////////////////////////////////////////
 // MODELS
@@ -339,12 +140,12 @@ export const SysUserSchema = z.object({
    */
   remark: z.string().nullable().describe("备注信息"),
   /**
-   * 停用/启用标识；false 停���；true 启用
+   * 停用/启用标识；false 停用；true 启用
    */
-  enabled: z.boolean().describe("停用/启用标识；false 停���；true 启用"),
-});
+  enabled: z.boolean().describe("停用/启用标识；false 停用；true 启用"),
+})
 
-export type SysUser = z.infer<typeof SysUserSchema>;
+export type SysUser = z.infer<typeof SysUserSchema>
 
 /////////////////////////////////////////
 // MEMBER SCHEMA
@@ -395,9 +196,9 @@ export const MemberSchema = z.object({
    * 头像地址
    */
   avatar: z.string().nullable().describe("头像地址"),
-});
+})
 
-export type Member = z.infer<typeof MemberSchema>;
+export type Member = z.infer<typeof MemberSchema>
 
 /////////////////////////////////////////
 // MEMBER LINKED ACCOUNT SCHEMA
@@ -452,9 +253,9 @@ export const MemberLinkedAccountSchema = z.object({
    * 从detail提取的用于检索的字段
    */
   search: z.string().describe("从detail提取的用于检索的字段"),
-});
+})
 
-export type MemberLinkedAccount = z.infer<typeof MemberLinkedAccountSchema>;
+export type MemberLinkedAccount = z.infer<typeof MemberLinkedAccountSchema>
 
 /////////////////////////////////////////
 // BLOCK CHAIN SCHEMA
@@ -516,9 +317,9 @@ export const BlockChainSchema = z.object({
    * 排序号
    */
   sort: z.number().int().describe("排序号"),
-});
+})
 
-export type BlockChain = z.infer<typeof BlockChainSchema>;
+export type BlockChain = z.infer<typeof BlockChainSchema>
 
 /////////////////////////////////////////
 // TOKEN CONTRACT SCHEMA
@@ -596,9 +397,9 @@ export const TokenContractSchema = z.object({
    * 排序号
    */
   sort: z.number().int().describe("排序号"),
-});
+})
 
-export type TokenContract = z.infer<typeof TokenContractSchema>;
+export type TokenContract = z.infer<typeof TokenContractSchema>
 
 /////////////////////////////////////////
 // BIZ CONTRACT SCHEMA
@@ -664,9 +465,9 @@ export const BizContractSchema = z.object({
    * 合约版本
    */
   ver: z.number().int().describe("合约版本"),
-});
+})
 
-export type BizContract = z.infer<typeof BizContractSchema>;
+export type BizContract = z.infer<typeof BizContractSchema>
 
 /////////////////////////////////////////
 // TRANSACTION HISTORY SCHEMA
@@ -691,9 +492,7 @@ export const TransactionHistorySchema = z.object({
   /**
    * 交易状态：PENDING 待支付；ACCEPTED 已支付；DECLINED 已拒绝；
    */
-  transactionStatus: TransactionStatusSchema.describe(
-    "交易状态：PENDING 待支付；ACCEPTED 已支付；DECLINED 已拒绝；"
-  ),
+  transactionStatus: TransactionStatusSchema.describe("交易状态：PENDING 待支付；ACCEPTED 已支付；DECLINED 已拒绝；"),
   /**
    * 区块链平台
    */
@@ -802,9 +601,9 @@ export const TransactionHistorySchema = z.object({
    * 附带留言
    */
   message: z.string().nullable().describe("附带留言"),
-});
+})
 
-export type TransactionHistory = z.infer<typeof TransactionHistorySchema>;
+export type TransactionHistory = z.infer<typeof TransactionHistorySchema>
 
 /////////////////////////////////////////
 // PAY LINK SCHEMA
@@ -876,6 +675,91 @@ export const PayLinkSchema = z.object({
    * 交易哈希
    */
   transactionHash: z.string().nullable().describe("交易哈希"),
-});
+})
 
-export type PayLink = z.infer<typeof PayLinkSchema>;
+export type PayLink = z.infer<typeof PayLinkSchema>
+
+/////////////////////////////////////////
+// SETTING SCHEMA
+/////////////////////////////////////////
+
+export const SettingSchema = z.object({
+  /**
+   * 主键
+   */
+  id: z.number().int().describe("主键"),
+  /**
+   * 是否删除
+   */
+  // omitted: deleted: z.number().int().describe("是否删除"),
+  /**
+   * 创建人 id
+   */
+  createBy: z.number().int().describe("创建人 id"),
+  /**
+   * 修改人 id
+   */
+  updateBy: z.number().int().describe("修改人 id"),
+  /**
+   * 创建时间
+   */
+  createAt: z.coerce.date().describe("创建时间"),
+  /**
+   * 修改时间
+   */
+  updateAt: z.coerce.date().describe("修改时间"),
+  /**
+   * 删除时间
+   */
+  deleteAt: z.number().int().describe("删除时间"),
+  /**
+   * 会员id
+   */
+  memberId: z.number().int().describe("会员id"),
+  /**
+   * 交易状态更新
+   */
+  notifyTransUpdate: z.boolean().describe("交易状态更新"),
+  /**
+   * 欺诈或可疑活动报警
+   */
+  notifyAbnormalAlarm: z.boolean().describe("欺诈或可疑活动报警"),
+  /**
+   * 付款请求通知
+   */
+  notifyPayRequest: z.boolean().describe("付款请求通知"),
+  /**
+   * Card Activity Notification
+   */
+  notifyCardActivity: z.boolean().describe("Card Activity Notification"),
+  /**
+   * 客户支持通知
+   */
+  notifyCustomerSupport: z.boolean().describe("客户支持通知"),
+  /**
+   * 账户余额警报
+   */
+  notifyBalanceAlarm: z.boolean().describe("账户余额警报"),
+  /**
+   * 安全警报
+   */
+  notifySecureAlarm: z.boolean().describe("安全警报"),
+  /**
+   * 每日或每周摘要
+   */
+  notifySummary: z.boolean().describe("每日或每周摘要"),
+  /**
+   * 应用程序更新与增强
+   */
+  sysAppUpdate: z.boolean().describe("应用程序更新与增强"),
+  /**
+   * 促销优惠与更新
+   */
+  sysSalesPromotion: z.boolean().describe("促销优惠与更新"),
+  /**
+   * 参与调研
+   */
+  sysSurvey: z.boolean().describe("参与调研"),
+})
+
+export type Setting = z.infer<typeof SettingSchema>

@@ -4,6 +4,7 @@ import { PrivyClient } from "@privy-io/server-auth";
 import { GetServerSideProps } from "next";
 import Head from "next/head";
 import { useRouter } from "next/router";
+import { memberApi } from "../api";
 
 export const getServerSideProps: GetServerSideProps = async ({ req }) => {
   const cookieAuthToken = req.cookies["privy-token"];
@@ -33,7 +34,7 @@ export const getServerSideProps: GetServerSideProps = async ({ req }) => {
 export default function LoginPage() {
   const router = useRouter();
   const { login } = useLogin({
-    onComplete: () => router.push("/dashboard"),
+    onComplete: () => memberApi.updateMember({}).then(() => router.push("/dashboard")),
   });
 
   return (

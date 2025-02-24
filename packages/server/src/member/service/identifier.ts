@@ -4,4 +4,5 @@ export const Symbols = {
   MemberService: Symbol.for("MemberService"),
   PayLinkService: Symbol.for("PayLinkService"),
   TransactionHistoryService: Symbol.for("TransactionHistoryService"),
+  SettingService: Symbol.for("SettingService"),
 };
