@@ -24,5 +24,5 @@ export const MemberModule = new ContainerModule((bind: interfaces.Bind) => {
     TransactionHistoryService
   );
   bind<PayLinkService>(Symbols.PayLinkService).to(PayLinkService);
-  bind<SettingService>(Symbols.PayLinkService).to(SettingService);
+  bind<SettingService>(Symbols.SettingService).to(SettingService);
 });

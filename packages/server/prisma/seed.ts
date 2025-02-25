@@ -57,7 +57,7 @@ const CHAIN_ADDRESSES: ChainAddressMap = {
     },
   },
   // Base Sepolia
-  84531: {
+  84532: {
     TEST: {
       USDC: "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
       USDT: "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
@@ -141,7 +141,7 @@ async function main() {
       {
         platform: BlockChainPlatform.ETH,
         network: BlockChainNetwork.TEST,
-        chainId: 84531,
+        chainId: 84532,
         name: "Base Sepolia",
         show: true,
         sort: 3,

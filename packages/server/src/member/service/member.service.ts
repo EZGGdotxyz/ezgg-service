@@ -26,6 +26,8 @@ import {
 import { z } from "zod";
 import { Member, Prisma } from "@prisma/client";
 import { DATA_NOT_EXIST } from "../../core/error.js";
+import { PagedResult, PageUtils } from "../../core/model.js";
+import { MemberSchema } from "../../../prisma/generated/zod/index.js";
 
 @injectable()
 export class MemberService {
@@ -43,9 +45,9 @@ export class MemberService {
   }: UpdateMemberInput): Promise<void> {
     const { isNew, member } = await this.findOrCreateMember({ user });
     if (isNew) {
-      this.syncLinkedAccounts({ user });
+      await this.syncLinkedAccounts({ user });
     }
-    this.prisma.$transaction(async (tx) => {
+    await this.prisma.$transaction(async (tx) => {
       await tx.member.update({
         data: {
           nickname,
@@ -54,7 +56,8 @@ export class MemberService {
         where: { id: member.id },
       });
       await this.privy.setCustomMetadata<CustomerMeteData>(member.did, {
-        id: isNew ? member.id : undefined,
+        ...user.customMetadata,
+        id: isNew ? member.id : Number(user.customMetadata.id),
         nickname,
         avatar,
       });
@@ -90,6 +93,41 @@ export class MemberService {
         data,
       });
     });
+  }
+
+  async pageMember(input: MemberPageQuery): Promise<MemberPageResult> {
+    return PagedResult.fromPaginationResult(
+      await this.prisma.member.paginate({
+        include: {
+          memberLinkedAccount: true,
+        },
+        where: {
+          OR: [
+            {
+              memberLinkedAccount: {
+                some: {
+                  search: {
+                    contains: input.search,
+                  },
+                },
+              },
+            },
+            {
+              nickname: {
+                contains: input.search,
+              },
+            },
+          ],
+        },
+        page: input.page,
+        limit: input.pageSize,
+        orderBy: [
+          {
+            createAt: "desc",
+          },
+        ],
+      })
+    );
   }
 
   private async findOrCreateMember({
@@ -183,11 +221,19 @@ export const MemberSchemas = {
     nickname: z.string({ description: "昵称" }).optional(),
     avatar: z.string({ description: "头像地址" }).optional(),
   }),
+  MemberPageQuery: PageUtils.asPageable(
+    z.object({
+      search: z.string({ description: "检索条件" }).optional(),
+    })
+  ),
+  MemberPageResult: PageUtils.asPagedResult(MemberSchema),
 };
 
 export type UpdateMemberInput = {
   user: User;
 } & z.infer<typeof MemberSchemas.UpdateMemberInput>;
+export type MemberPageQuery = z.infer<typeof MemberSchemas.MemberPageQuery>;
+export type MemberPageResult = z.infer<typeof MemberSchemas.MemberPageResult>;
 
 export type CustomerMeteData = {
   id?: number;

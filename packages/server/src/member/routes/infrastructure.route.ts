@@ -23,7 +23,7 @@ const route: FastifyPluginAsyncZod = async (fastify) => {
       schema: {
         tags: [TAG],
         summary: "获取区块链列表",
-        params: BlockChainSchemas.BlockChainQuery,
+        querystring: BlockChainSchemas.BlockChainQuery,
         response: {
           200: ApiUtils.asApiResult(z.array(BlockChainSchema)),
         },
@@ -33,7 +33,7 @@ const route: FastifyPluginAsyncZod = async (fastify) => {
       ApiUtils.ok(
         await fastify.diContainer
           .get<BlockChainService>(Symbols.BlockChainService)
-          .listBlockChain(request.params)
+          .listBlockChain(request.query)
       )
   );
 
@@ -43,7 +43,7 @@ const route: FastifyPluginAsyncZod = async (fastify) => {
       schema: {
         tags: [TAG],
         summary: "获取代币合约列表",
-        params: BlockChainSchemas.TokenContractQuery,
+        querystring: BlockChainSchemas.TokenContractQuery,
         response: {
           200: ApiUtils.asApiResult(z.array(TokenContractSchema)),
         },
@@ -53,7 +53,7 @@ const route: FastifyPluginAsyncZod = async (fastify) => {
       ApiUtils.ok(
         await fastify.diContainer
           .get<BlockChainService>(Symbols.BlockChainService)
-          .listTokenContract(request.params)
+          .listTokenContract(request.query)
       )
   );
 
@@ -63,7 +63,7 @@ const route: FastifyPluginAsyncZod = async (fastify) => {
       schema: {
         tags: [TAG],
         summary: "获取业务合约列表",
-        params: BlockChainSchemas.TokenContractQuery,
+        querystring: BlockChainSchemas.TokenContractQuery,
         response: {
           200: ApiUtils.asApiResult(z.array(BizContractSchema)),
         },
@@ -73,7 +73,7 @@ const route: FastifyPluginAsyncZod = async (fastify) => {
       ApiUtils.ok(
         await fastify.diContainer
           .get<BizContractService>(Symbols.BizContractService)
-          .listContract(request.params)
+          .listContract(request.query)
       )
   );
 };

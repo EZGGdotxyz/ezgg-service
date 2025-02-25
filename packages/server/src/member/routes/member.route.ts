@@ -71,6 +71,28 @@ const route: FastifyPluginAsyncZod = async (fastify) => {
     },
     async (request) => ApiUtils.ok(request.privyUser)
   );
+
+  fastify.get(
+    "/page-member",
+    {
+      schema: {
+        tags: [TAG],
+        summary: "分页查询会员列表",
+        security: [{ authorization: [] }],
+        querystring: MemberSchemas.MemberPageQuery,
+        response: {
+          200: ApiUtils.asApiResult(MemberSchemas.MemberPageResult),
+        },
+      },
+      onRequest: [fastify.privyAuth],
+    },
+    async (request) =>
+      ApiUtils.ok(
+        await fastify.diContainer
+          .get<MemberService>(Symbols.MemberService)
+          .pageMember(request.query)
+      )
+  );
 };
 
 export default route;

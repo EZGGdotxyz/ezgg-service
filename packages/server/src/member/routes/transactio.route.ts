@@ -28,11 +28,12 @@ const route: FastifyPluginAsyncZod = async (fastify) => {
     },
     async (request) => {
       const service = fastify.diContainer.get<TransactionHistoryService>(
-        Symbols.MemberService
+        Symbols.TransactionHistoryService
       );
+      const memberId = request.privyUser?.customMetadata.id! as number;
       const id = await service.createTransactionHistory({
         ...request.body,
-        memberId: request.privyUser?.customMetadata.id! as number,
+        memberId,
       });
       return ApiUtils.ok(await service.findTransactionHistory({ id }));
     }
@@ -56,7 +57,7 @@ const route: FastifyPluginAsyncZod = async (fastify) => {
     },
     async (request) => {
       const service = fastify.diContainer.get<TransactionHistoryService>(
-        Symbols.MemberService
+        Symbols.TransactionHistoryService
       );
       await service.updateTransactionHash({
         ...request.body,
@@ -85,7 +86,7 @@ const route: FastifyPluginAsyncZod = async (fastify) => {
     },
     async (request) => {
       const service = fastify.diContainer.get<TransactionHistoryService>(
-        Symbols.MemberService
+        Symbols.TransactionHistoryService
       );
       await service.declineTransactionHistory({
         ...request.body,
@@ -114,7 +115,7 @@ const route: FastifyPluginAsyncZod = async (fastify) => {
     },
     async (request) => {
       const service = fastify.diContainer.get<TransactionHistoryService>(
-        Symbols.MemberService
+        Symbols.TransactionHistoryService
       );
       return ApiUtils.ok(
         await service.findTransactionHistory({ id: request.params.id })
@@ -141,7 +142,7 @@ const route: FastifyPluginAsyncZod = async (fastify) => {
     async (request) =>
       ApiUtils.ok(
         await fastify.diContainer
-          .get<TransactionHistoryService>(Symbols.MemberService)
+          .get<TransactionHistoryService>(Symbols.TransactionHistoryService)
           .pageTransactionHistory({
             ...request.query,
             memberId: request.privyUser?.customMetadata.id! as number,

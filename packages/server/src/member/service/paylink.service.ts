@@ -13,6 +13,7 @@ import { MemberService } from "./index.js";
 import { PARAMETER_ERROR } from "../../core/error.js";
 import { nanoid } from "nanoid";
 import * as _ from "radash";
+import { ethers } from "ethers";
 
 @injectable()
 export class PayLinkService {
@@ -40,8 +41,14 @@ export class PayLinkService {
       if (TransactionType.PAY_LINK !== transactionHistory.transactionType) {
         throw PARAMETER_ERROR({ message: "Not a pay link transaction" });
       }
+      const { platform, chainId, network, tokenSymbol, tokenContractAddress } =
+        transactionHistory;
       const data: Prisma.PayLinkCreateInput = {
-        ...transactionHistory,
+        platform,
+        chainId,
+        network,
+        tokenSymbol,
+        tokenContractAddress,
         transactionHistoryId: transactionHistory.id,
         senderWalletAddress: transactionHistory.senderWalletAddress!,
         bizContractAddress: transactionHistory.bizContractAddress!,
@@ -128,8 +135,7 @@ export class PayLinkService {
   }
 
   private hashKeccak256(input: string): string {
-    // TODO Keccak256
-    return "";
+    return ethers.keccak256(ethers.toUtf8Bytes(input));
   }
 }
 

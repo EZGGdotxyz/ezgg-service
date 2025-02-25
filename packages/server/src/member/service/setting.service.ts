@@ -71,7 +71,6 @@ export const SettingSchemas = {
     updateBy: true,
     createAt: true,
     updateAt: true,
-    deleteAt: true,
   }),
   SettingOutput: SettingSchema.omit({
     id: true,
@@ -79,7 +78,6 @@ export const SettingSchemas = {
     updateBy: true,
     createAt: true,
     updateAt: true,
-    deleteAt: true,
   }),
 };
 

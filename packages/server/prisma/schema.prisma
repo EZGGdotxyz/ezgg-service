@@ -22,19 +22,19 @@ generator zod {
 
 model SysUser {
   /// 主键
-  id       Int      @id @default(autoincrement()) @db.UnsignedInt
+  id       Int       @id @default(autoincrement()) @db.UnsignedInt
   /// 是否删除 @zod.custom.omit(["model"])
-  deleted  Int      @default(0) @db.UnsignedInt
+  deleted  Int       @default(0) @db.UnsignedInt
   /// 创建人 id
-  createBy Int      @default(0) @db.UnsignedInt
+  createBy Int       @default(0) @db.UnsignedInt
   /// 修改人 id
-  updateBy Int      @default(0) @db.UnsignedInt
+  updateBy Int       @default(0) @db.UnsignedInt
   /// 创建时间
-  createAt DateTime @default(now())
+  createAt DateTime  @default(now())
   /// 修改时间
-  updateAt DateTime @default(now()) @updatedAt
-  /// 删除时间
-  deleteAt Int      @default(0) @db.UnsignedInt
+  updateAt DateTime  @default(now()) @updatedAt
+  /// 删除时间 @zod.custom.omit(["model"])
+  deleteAt DateTime?
 
   /// 管理员
   name     String  @db.VarChar(32)
@@ -56,19 +56,19 @@ model SysUser {
 
 model Member {
   /// 主键
-  id       Int      @id @default(autoincrement()) @db.UnsignedInt
+  id       Int       @id @default(autoincrement()) @db.UnsignedInt
   /// 是否删除 @zod.custom.omit(["model"])
-  deleted  Int      @default(0) @db.UnsignedInt
+  deleted  Int       @default(0) @db.UnsignedInt
   /// 创建人 id
-  createBy Int      @default(0) @db.UnsignedInt
+  createBy Int       @default(0) @db.UnsignedInt
   /// 修改人 id
-  updateBy Int      @default(0) @db.UnsignedInt
+  updateBy Int       @default(0) @db.UnsignedInt
   /// 创建时间
-  createAt DateTime @default(now())
+  createAt DateTime  @default(now())
   /// 修改时间
-  updateAt DateTime @default(now()) @updatedAt
-  /// 删除时间
-  deleteAt Int      @default(0) @db.UnsignedInt
+  updateAt DateTime  @default(now()) @updatedAt
+  /// 删除时间 @zod.custom.omit(["model"])
+  deleteAt DateTime?
 
   /// Privy User DID
   did       String   @unique @db.VarChar(64)
@@ -79,33 +79,33 @@ model Member {
   /// 头像地址
   avatar    String?  @db.VarChar(255)
 
-  MemberLinkedAccount MemberLinkedAccount[]
+  memberLinkedAccount MemberLinkedAccount[]
 
   @@map("member")
 }
 
 model MemberLinkedAccount {
   /// 主键
-  id       Int      @id @default(autoincrement()) @db.UnsignedInt
+  id       Int       @id @default(autoincrement()) @db.UnsignedInt
   /// 是否删除 @zod.custom.omit(["model"])
-  deleted  Int      @default(0) @db.UnsignedInt
+  deleted  Int       @default(0) @db.UnsignedInt
   /// 创建人 id
-  createBy Int      @default(0) @db.UnsignedInt
+  createBy Int       @default(0) @db.UnsignedInt
   /// 修改人 id
-  updateBy Int      @default(0) @db.UnsignedInt
+  updateBy Int       @default(0) @db.UnsignedInt
   /// 创建时间
-  createAt DateTime @default(now())
+  createAt DateTime  @default(now())
   /// 修改时间
-  updateAt DateTime @default(now()) @updatedAt
-  /// 删除时间
-  deleteAt Int      @default(0) @db.UnsignedInt
+  updateAt DateTime  @default(now()) @updatedAt
+  /// 删除时间 @zod.custom.omit(["model"])
+  deleteAt DateTime?
 
   /// 用户id
   memberId Int    @db.UnsignedInt
   member   Member @relation(fields: [memberId], references: [id])
 
   /// Privy User DID
-  did    String @unique @db.VarChar(64)
+  did    String @db.VarChar(64)
   /// Privy User LinkedAccount的类型
   type   String @db.VarChar(32)
   /// Privy User 绑定账号详情JSON
@@ -142,19 +142,19 @@ enum BIZ {
 /// 区块链信息
 model BlockChain {
   /// 主键
-  id       Int      @id @default(autoincrement()) @db.UnsignedInt
+  id       Int       @id @default(autoincrement()) @db.UnsignedInt
   /// 是否删除 @zod.custom.omit(["model"])
-  deleted  Int      @default(0) @db.UnsignedInt
+  deleted  Int       @default(0) @db.UnsignedInt
   /// 创建人 id
-  createBy Int      @default(0) @db.UnsignedInt
+  createBy Int       @default(0) @db.UnsignedInt
   /// 修改人 id
-  updateBy Int      @default(0) @db.UnsignedInt
+  updateBy Int       @default(0) @db.UnsignedInt
   /// 创建时间
-  createAt DateTime @default(now())
+  createAt DateTime  @default(now())
   /// 修改时间
-  updateAt DateTime @default(now()) @updatedAt
-  /// 删除时间
-  deleteAt Int      @default(0) @db.UnsignedInt
+  updateAt DateTime  @default(now()) @updatedAt
+  /// 删除时间 @zod.custom.omit(["model"])
+  deleteAt DateTime?
 
   /// 区块链平台
   platform BlockChainPlatform
@@ -176,19 +176,19 @@ model BlockChain {
 /// 代币合约信息
 model TokenContract {
   /// 主键
-  id       Int      @id @default(autoincrement()) @db.UnsignedInt
+  id       Int       @id @default(autoincrement()) @db.UnsignedInt
   /// 是否删除 @zod.custom.omit(["model"])
-  deleted  Int      @default(0) @db.UnsignedInt
+  deleted  Int       @default(0) @db.UnsignedInt
   /// 创建人 id
-  createBy Int      @default(0) @db.UnsignedInt
+  createBy Int       @default(0) @db.UnsignedInt
   /// 修改人 id
-  updateBy Int      @default(0) @db.UnsignedInt
+  updateBy Int       @default(0) @db.UnsignedInt
   /// 创建时间
-  createAt DateTime @default(now())
+  createAt DateTime  @default(now())
   /// 修改时间
-  updateAt DateTime @default(now()) @updatedAt
-  /// 删除时间
-  deleteAt Int      @default(0) @db.UnsignedInt
+  updateAt DateTime  @default(now()) @updatedAt
+  /// 删除时间 @zod.custom.omit(["model"])
+  deleteAt DateTime?
 
   /// 代币合约地址
   address       String
@@ -220,19 +220,19 @@ model TokenContract {
 /// 业务合约信息
 model BizContract {
   /// 主键
-  id       Int      @id @default(autoincrement()) @db.UnsignedInt
+  id       Int       @id @default(autoincrement()) @db.UnsignedInt
   /// 是否删除 @zod.custom.omit(["model"])
-  deleted  Int      @default(0) @db.UnsignedInt
+  deleted  Int       @default(0) @db.UnsignedInt
   /// 创建人 id
-  createBy Int      @default(0) @db.UnsignedInt
+  createBy Int       @default(0) @db.UnsignedInt
   /// 修改人 id
-  updateBy Int      @default(0) @db.UnsignedInt
+  updateBy Int       @default(0) @db.UnsignedInt
   /// 创建时间
-  createAt DateTime @default(now())
+  createAt DateTime  @default(now())
   /// 修改时间
-  updateAt DateTime @default(now()) @updatedAt
-  /// 删除时间
-  deleteAt Int      @default(0) @db.UnsignedInt
+  updateAt DateTime  @default(now()) @updatedAt
+  /// 删除时间 @zod.custom.omit(["model"])
+  deleteAt DateTime?
 
   /// 业务合约地址
   address  String
@@ -279,19 +279,19 @@ enum TransactionType {
 /// 交易历史记录
 model TransactionHistory {
   /// 主键
-  id       Int      @id @default(autoincrement()) @db.UnsignedInt
+  id       Int       @id @default(autoincrement()) @db.UnsignedInt
   /// 是否删除 @zod.custom.omit(["model"])
-  deleted  Int      @default(0) @db.UnsignedInt
+  deleted  Int       @default(0) @db.UnsignedInt
   /// 创建人 id
-  createBy Int      @default(0) @db.UnsignedInt
+  createBy Int       @default(0) @db.UnsignedInt
   /// 修改人 id
-  updateBy Int      @default(0) @db.UnsignedInt
+  updateBy Int       @default(0) @db.UnsignedInt
   /// 创建时间
-  createAt DateTime @default(now())
+  createAt DateTime  @default(now())
   /// 修改时间
-  updateAt DateTime @default(now()) @updatedAt
-  /// 删除时间
-  deleteAt Int      @default(0) @db.UnsignedInt
+  updateAt DateTime  @default(now()) @updatedAt
+  /// 删除时间 @zod.custom.omit(["model"])
+  deleteAt DateTime?
 
   /// 交易创建人 - 会员id
   memberId Int @db.UnsignedInt
@@ -355,19 +355,19 @@ model TransactionHistory {
 
 model PayLink {
   /// 主键
-  id       Int      @id @default(autoincrement()) @db.UnsignedInt
+  id       Int       @id @default(autoincrement()) @db.UnsignedInt
   /// 是否删除 @zod.custom.omit(["model"])
-  deleted  Int      @default(0) @db.UnsignedInt
+  deleted  Int       @default(0) @db.UnsignedInt
   /// 创建人 id
-  createBy Int      @default(0) @db.UnsignedInt
+  createBy Int       @default(0) @db.UnsignedInt
   /// 修改人 id
-  updateBy Int      @default(0) @db.UnsignedInt
+  updateBy Int       @default(0) @db.UnsignedInt
   /// 创建时间
-  createAt DateTime @default(now())
+  createAt DateTime  @default(now())
   /// 修改时间
-  updateAt DateTime @default(now()) @updatedAt
-  /// 删除时间
-  deleteAt Int      @default(0) @db.UnsignedInt
+  updateAt DateTime  @default(now()) @updatedAt
+  /// 删除时间 @zod.custom.omit(["model"])
+  deleteAt DateTime?
 
   // 交易历史id
   transactionHistoryId Int @unique @db.UnsignedInt
@@ -394,19 +394,19 @@ model PayLink {
 
 model Setting {
   /// 主键
-  id       Int      @id @default(autoincrement()) @db.UnsignedInt
+  id       Int       @id @default(autoincrement()) @db.UnsignedInt
   /// 是否删除 @zod.custom.omit(["model"])
-  deleted  Int      @default(0) @db.UnsignedInt
+  deleted  Int       @default(0) @db.UnsignedInt
   /// 创建人 id
-  createBy Int      @default(0) @db.UnsignedInt
+  createBy Int       @default(0) @db.UnsignedInt
   /// 修改人 id
-  updateBy Int      @default(0) @db.UnsignedInt
+  updateBy Int       @default(0) @db.UnsignedInt
   /// 创建时间
-  createAt DateTime @default(now())
+  createAt DateTime  @default(now())
   /// 修改时间
-  updateAt DateTime @default(now()) @updatedAt
-  /// 删除时间
-  deleteAt Int      @default(0) @db.UnsignedInt
+  updateAt DateTime  @default(now()) @updatedAt
+  /// 删除时间 @zod.custom.omit(["model"])
+  deleteAt DateTime?
 
   ///  会员id
   memberId Int @unique @db.UnsignedInt
