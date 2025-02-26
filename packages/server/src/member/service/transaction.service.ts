@@ -21,6 +21,7 @@ import { PARAMETER_ERROR, UNEXPECTED } from "../../core/error.js";
 import * as _ from "radash";
 import { PagedResult, PageUtils } from "../../core/model.js";
 import { TransactionHistorySchema } from "../../../prisma/generated/zod/index.js";
+import { nanoid } from "nanoid";
 
 @injectable()
 export class TransactionHistoryService {
@@ -60,6 +61,7 @@ export class TransactionHistoryService {
 
     const data: Prisma.TransactionHistoryCreateInput = {
       ...input,
+      transactionCode: nanoid(32),
       network: blockChain.network,
       tokenDecimals: tokenContract.tokenDecimals,
       tokenContractAddress: tokenContract.address,

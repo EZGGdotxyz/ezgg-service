@@ -40,7 +40,7 @@ export default function DashboardPage() {
   const [transactionId, setTransactionId] = useState<string>("");
   const [depositAmount, setDepositAmount] = useState<number>();
   const [showPayLinkWithdrawModal, setShowPayLinkWithdrawModal] = useState(false);
-  const [withdrawTransactionId, setWithdrawTransactionId] = useState<string>("");
+  const [transactionCode, setTransactionCode] = useState<string>("");
   const [isWithdrawing, setIsWithdrawing] = useState(false);
 
   useEffect(() => {
@@ -275,7 +275,7 @@ export default function DashboardPage() {
 
       // 2. 创建支付链接
       const { data: payLink } = await paylinkApi.createPayLink({
-        transactionHistoryId: transaction.id,
+        transactionCode: transaction.transactionCode,
       });
 
       // USDC代币合约地址
@@ -314,7 +314,7 @@ export default function DashboardPage() {
         transactionHash
       });
 
-      setTransactionId(String(transaction.id))
+      setTransactionId(String(transaction.transactionCode))
     } catch (err) {
       console.error("Deposit failed:", err);
       setError("Deposit transaction failed");
@@ -324,14 +324,8 @@ export default function DashboardPage() {
   // 从PayLink中获取USDC
   const handleWithdraw = async () => {
     try {
-      if (!smartWalletClient || !withdrawTransactionId) {
+      if (!smartWalletClient || !transactionCode) {
         setError("Invalid parameters");
-        return;
-      }
-
-      // 参数校验扩展
-      if (isNaN(Number(withdrawTransactionId))) {
-        setError("Invalid Transaction ID format");
         return;
       }
 
@@ -339,7 +333,7 @@ export default function DashboardPage() {
 
       // 1. 查询支付链接信息
       const { data: payLink } = await paylinkApi.findPayLink({
-        transactionHistoryId: Number(withdrawTransactionId),
+        transactionCode,
       });
 
       // 2. 执行合约调用
@@ -362,13 +356,13 @@ export default function DashboardPage() {
 
       // 3. 更新交易哈希
       await paylinkApi.updatePayLinkTransactionHash({
-        transactionHistoryId: Number(withdrawTransactionId),
+        transactionCode,
         transactionHash
       });
 
       // 4. 重置状态
       setShowPayLinkWithdrawModal(false);
-      setWithdrawTransactionId("");
+      setTransactionCode("");
       
     } catch (err) {
       console.error("Withdraw failed:", err);
@@ -670,7 +664,7 @@ export default function DashboardPage() {
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium mb-1">
-                    Transaction ID
+                    Transaction Code
                   </label>
                   <input
                     value={transactionId}
@@ -711,7 +705,7 @@ export default function DashboardPage() {
                 <button
                   onClick={() => {
                     setShowPayLinkWithdrawModal(false);
-                    setWithdrawTransactionId("");
+                    setTransactionCode("");
                     setError(null);
                   }}
                   className="text-gray-500 hover:text-gray-700"
@@ -722,14 +716,14 @@ export default function DashboardPage() {
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium mb-1">
-                    Transaction ID
+                    Transaction Code
                   </label>
                   <input
-                    type="number"
-                    value={withdrawTransactionId}
-                    onChange={(e) => setWithdrawTransactionId(e.target.value)}
+                    type="string"
+                    value={transactionCode}
+                    onChange={(e) => setTransactionCode(e.target.value)}
                     className="w-full px-3 py-2 border rounded-md"
-                    placeholder="Enter Transaction ID"
+                    placeholder="Enter Transaction Code"
                   />
                 </div>
                 <button

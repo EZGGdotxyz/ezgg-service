@@ -1,6 +1,7 @@
 import * as path from "path";
 import AutoLoad, { AutoloadPluginOptions } from "@fastify/autoload";
 import fastifyCookie from "@fastify/cookie";
+import fastifyStatic from "@fastify/static";
 import { FastifyPluginAsync, FastifyServerOptions } from "fastify";
 import { fileURLToPath } from "url";
 import {
@@ -37,6 +38,11 @@ const app: FastifyPluginAsync<AppOptions> = async (
   fastify.setSerializerCompiler(serializerCompiler);
   fastify.setValidatorCompiler(validatorCompiler);
   fastify.register(fastifyCookie, {});
+  fastify.register(fastifyStatic, {
+    root: path.join(path.dirname(__dirname), "public"),
+    prefix: "/public/", // optional: default '/'
+    constraints: {}, // optional: default {}
+  });
 
   fastify.setErrorHandler((error, request, reply) => {
     if (error instanceof ServiceError) {

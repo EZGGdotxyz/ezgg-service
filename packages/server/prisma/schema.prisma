@@ -296,6 +296,9 @@ model TransactionHistory {
   /// 交易创建人 - 会员id
   memberId Int @db.UnsignedInt
 
+  /// 交易编码
+  transactionCode String @unique @db.VarChar(64)
+
   /// 交易分类
   transactionCategory TransactionCategory
   /// 交易类型
@@ -370,7 +373,9 @@ model PayLink {
   deleteAt DateTime?
 
   // 交易历史id
-  transactionHistoryId Int @unique @db.UnsignedInt
+  transactionHistoryId Int    @unique @db.UnsignedInt
+  /// 交易编码
+  transactionCode      String @unique @db.VarChar(64)
 
   /// 区块链平台
   platform             BlockChainPlatform

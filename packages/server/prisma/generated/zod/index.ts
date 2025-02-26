@@ -123,6 +123,7 @@ export const TransactionHistoryScalarFieldEnumSchema = z.enum([
   "updateAt",
   "deleteAt",
   "memberId",
+  "transactionCode",
   "transactionCategory",
   "transactionType",
   "business",
@@ -157,6 +158,7 @@ export const PayLinkScalarFieldEnumSchema = z.enum([
   "updateAt",
   "deleteAt",
   "transactionHistoryId",
+  "transactionCode",
   "platform",
   "chainId",
   "network",
@@ -227,6 +229,7 @@ export const TokenContractOrderByRelevanceFieldEnumSchema = z.enum([
 export const BizContractOrderByRelevanceFieldEnumSchema = z.enum(["address"]);
 
 export const TransactionHistoryOrderByRelevanceFieldEnumSchema = z.enum([
+  "transactionCode",
   "bizContractAddress",
   "senderDid",
   "senderWalletAddress",
@@ -239,6 +242,7 @@ export const TransactionHistoryOrderByRelevanceFieldEnumSchema = z.enum([
 ]);
 
 export const PayLinkOrderByRelevanceFieldEnumSchema = z.enum([
+  "transactionCode",
   "tokenSymbol",
   "tokenContractAddress",
   "senderWalletAddress",
@@ -757,6 +761,10 @@ export const TransactionHistorySchema = z.object({
    */
   memberId: z.number().int().describe("交易创建人 - 会员id"),
   /**
+   * 交易编码
+   */
+  transactionCode: z.string().describe("交易编码"),
+  /**
    * 业务合约地址
    */
   bizContractAddress: z.string().nullable().describe("业务合约地址"),
@@ -870,6 +878,10 @@ export const PayLinkSchema = z.object({
    */
   // omitted: deleteAt: z.coerce.date().nullable().describe("删除时间"),
   transactionHistoryId: z.number().int(),
+  /**
+   * 交易编码
+   */
+  transactionCode: z.string().describe("交易编码"),
   /**
    * 区块链id
    */

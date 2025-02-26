@@ -1,7 +1,8 @@
 import axios from "axios";
 
 const apiClient = axios.create({
-  baseURL: "http://localhost:3001", // 后端服务地址
+  baseURL: "https://api.catfoodworks.com",
+  // baseURL: "http://localhost:3001",
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",
@@ -14,6 +15,11 @@ apiClient.interceptors.request.use((config) => {
   if (token) {
     const t = JSON.parse(token);
     config.headers.Authorization = `Bearer ${t}`;
+  }
+  const idToken = localStorage.getItem("privy:id_token");
+  if (idToken) {
+    const t = JSON.parse(idToken);
+    config.headers["privy-id-token"] = `${t}`;
   }
   return config;
 });

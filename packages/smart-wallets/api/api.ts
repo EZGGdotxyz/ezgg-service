@@ -33,6 +33,7 @@ export declare namespace API {
 
   export type TransactionHistory = {
     id: number;
+    transactionCode: string;
     bizContractAddress: string;
     platform: BlockChainPlatform;
     chainId: number;
@@ -88,20 +89,20 @@ export declare namespace API {
 
   // PayLink 相关类型
   export type PlayLinkCreateInput = {
-    transactionHistoryId: number;
+    transactionCode: string;
   };
 
   export type PlayLinkTransactionHashUpdateInput = {
-    transactionHistoryId: number;
+    transactionCode: string;
     transactionHash: string;
   };
 
   export type FindPayLinkInput = {
-    transactionHistoryId: number;
+    transactionCode: string;
   };
 
   export type PlayLinkOutput = {
-    transactionHistoryId: number;
+    transactionCode: string;
     platform: BlockChainPlatform;
     chainId: number;
     tokenSymbol: string;

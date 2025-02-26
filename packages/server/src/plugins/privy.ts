@@ -34,7 +34,7 @@ const plugins: FastifyPluginAsync = async (fastify) => {
         throw UNAUTHORIZED({ message: "User Login Expired" });
       }
 
-      const idToken = request.cookies["privy-id-token"];
+      const idToken = request.headers["privy-id-token"] as string;
       if (!idToken) {
         throw UNAUTHORIZED({ message: "User Info Required" });
       }

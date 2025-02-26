@@ -25,15 +25,15 @@ export class PayLinkService {
   ) {}
 
   async createPlayLink({
-    transactionHistoryId,
+    transactionCode,
   }: PlayLinkCreateInput): Promise<PlayLinkOutput> {
     let payLink = await this.prisma.payLink.findUnique({
-      where: { transactionHistoryId },
+      where: { transactionCode },
     });
     if (!payLink) {
       const transactionHistory =
         await this.prisma.transactionHistory.findUnique({
-          where: { id: transactionHistoryId },
+          where: { transactionCode },
         });
       if (!transactionHistory) {
         throw PARAMETER_ERROR({ message: "transaction history not exist" });
@@ -49,6 +49,7 @@ export class PayLinkService {
         network,
         tokenSymbol,
         tokenContractAddress,
+        transactionCode,
         transactionHistoryId: transactionHistory.id,
         senderWalletAddress: transactionHistory.senderWalletAddress!,
         bizContractAddress: transactionHistory.bizContractAddress!,
@@ -66,11 +67,11 @@ export class PayLinkService {
 
   async updateTransactionHash({
     memberId,
-    transactionHistoryId,
+    transactionCode,
     transactionHash,
   }: PlayLinkTransactionHashUpdateInput) {
     let payLink = await this.prisma.payLink.findUnique({
-      where: { transactionHistoryId },
+      where: { transactionCode },
     });
     if (!payLink) {
       throw PARAMETER_ERROR({ message: "pay link not exist" });
@@ -80,7 +81,7 @@ export class PayLinkService {
     }
 
     const transactionHistory = await this.prisma.transactionHistory.findUnique({
-      where: { id: transactionHistoryId },
+      where: { transactionCode },
     });
     if (!transactionHistory) {
       throw PARAMETER_ERROR({ message: "transaction history not exist" });
@@ -123,10 +124,10 @@ export class PayLinkService {
   }
 
   async findPayLink({
-    transactionHistoryId,
+    transactionCode,
   }: FindPayLinkInput): Promise<PlayLinkOutput> {
     let payLink = await this.prisma.payLink.findUnique({
-      where: { transactionHistoryId },
+      where: { transactionCode },
     });
     if (!payLink) {
       throw PARAMETER_ERROR({ message: "pay link not exist" });
@@ -141,17 +142,17 @@ export class PayLinkService {
 
 export const PlayLinkSchemas = {
   PlayLinkCreateInput: z.object({
-    transactionHistoryId: z.number({ description: "交易历史id" }),
+    transactionCode: z.string({ description: "交易编号" }),
   }),
   FindPayLinkInput: z.object({
-    transactionHistoryId: z.number({ description: "交易历史id" }),
+    transactionCode: z.string({ description: "交易编号" }),
   }),
   PlayLinkTransactionHashUpdateInput: z.object({
-    transactionHistoryId: z.number({ description: "交易历史id" }),
+    transactionCode: z.string({ description: "交易编号" }),
     transactionHash: z.string({ description: "交易哈希" }),
   }),
   PlayLinkOutput: z.object({
-    transactionHistoryId: z.number({ description: "交易历史id" }),
+    transactionCode: z.string({ description: "交易编号" }),
     platform: z.nativeEnum(BlockChainPlatform, {
       description: "区块链平台: ETH 以太坊；SOLANA Solana;",
     }),
