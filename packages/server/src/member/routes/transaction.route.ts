@@ -98,7 +98,7 @@ const route: FastifyPluginAsyncZod = async (fastify) => {
   );
 
   fastify.get(
-    "/find-transaction-history/{id}",
+    "/find-transaction-history/:id",
     {
       schema: {
         tags: [TAG],
@@ -119,6 +119,34 @@ const route: FastifyPluginAsyncZod = async (fastify) => {
       );
       return ApiUtils.ok(
         await service.findTransactionHistory({ id: request.params.id })
+      );
+    }
+  );
+
+  fastify.get(
+    "/find-transaction-history/code/:transactionCode",
+    {
+      schema: {
+        tags: [TAG],
+        summary: "通过transactionCode获取交易历史记录详情",
+        security: [{ authorization: [] }],
+        params: TransactionHistorySchemas.TransactionHistoryFindByCodeInput,
+        response: {
+          200: ApiUtils.asApiResult(
+            TransactionHistorySchemas.TransactionHistoryFindOutput
+          ),
+        },
+      },
+      onRequest: [fastify.privyAuth],
+    },
+    async (request) => {
+      const service = fastify.diContainer.get<TransactionHistoryService>(
+        Symbols.TransactionHistoryService
+      );
+      return ApiUtils.ok(
+        await service.findTransactionHistoryByCode({
+          transactionCode: request.params.transactionCode,
+        })
       );
     }
   );

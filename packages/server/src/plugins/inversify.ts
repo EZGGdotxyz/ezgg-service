@@ -7,12 +7,16 @@ import { Symbols } from "../identifier.js";
 import { AdminModule } from "../admin/service/index.js";
 import { PrivyClient } from "@privy-io/server-auth";
 import { MemberModule } from "../member/service/index.js";
+import { AlchemyFactory } from "./alchemy.js";
 
 const plugins: FastifyPluginAsync = async (fastify) => {
   const ProviderModule = new ContainerModule((bind: interfaces.Bind) => {
     bind<FastifyInstance>(Symbols.Fastify).toConstantValue(fastify);
     bind<PrismaClient>(Symbols.PrismaClient).toConstantValue(fastify.prisma);
     bind<PrivyClient>(Symbols.PrivyClient).toConstantValue(fastify.privy);
+    bind<AlchemyFactory>(Symbols.AlchemyFactory).toConstantValue(
+      fastify.alchemy
+    );
   });
 
   fastify.register(Inversify, {
@@ -23,7 +27,7 @@ const plugins: FastifyPluginAsync = async (fastify) => {
 
 const options: PluginMetadata = {
   name: "inversify",
-  dependencies: ["prisma", "privy"],
+  dependencies: ["prisma", "privy", "alchemy"],
 };
 
 export default fp(plugins, options);

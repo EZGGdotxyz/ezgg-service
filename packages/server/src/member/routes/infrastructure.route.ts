@@ -9,7 +9,6 @@ import {
 import { ApiUtils } from "../../core/model.js";
 import {
   BizContractSchema,
-  BlockChainSchema,
   TokenContractSchema,
 } from "../../../prisma/generated/zod/index.js";
 
@@ -25,7 +24,9 @@ const route: FastifyPluginAsyncZod = async (fastify) => {
         summary: "获取区块链列表",
         querystring: BlockChainSchemas.BlockChainQuery,
         response: {
-          200: ApiUtils.asApiResult(z.array(BlockChainSchema)),
+          200: ApiUtils.asApiResult(
+            z.array(BlockChainSchemas.BlockChainOutput)
+          ),
         },
       },
     },

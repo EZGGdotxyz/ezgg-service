@@ -41,13 +41,12 @@ export class PayLinkService {
       if (TransactionType.PAY_LINK !== transactionHistory.transactionType) {
         throw PARAMETER_ERROR({ message: "Not a pay link transaction" });
       }
-      const { platform, chainId, network, tokenSymbol, tokenContractAddress } =
+      const { platform, chainId, network, tokenContractAddress } =
         transactionHistory;
       const data: Prisma.PayLinkCreateInput = {
         platform,
         chainId,
         network,
-        tokenSymbol,
         tokenContractAddress,
         transactionCode,
         transactionHistoryId: transactionHistory.id,
@@ -157,7 +156,6 @@ export const PlayLinkSchemas = {
       description: "区块链平台: ETH 以太坊；SOLANA Solana;",
     }),
     chainId: z.number({ description: "区块链id" }),
-    tokenSymbol: z.string({ description: "代币符号" }),
     tokenContractAddress: z.string({ description: "代币合约地址" }),
     senderWalletAddress: z.string({ description: "付款人 - 钱包地址" }),
     bizContractAddress: z.string({ description: "业务合约地址" }),

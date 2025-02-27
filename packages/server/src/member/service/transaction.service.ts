@@ -13,6 +13,7 @@ import type { ExtendPrismaClient as PrismaClient } from "../../plugins/prisma.js
 import {
   BizContractService,
   BlockChainService,
+  MemberSchemas,
   MemberService,
 } from "./index.js";
 import { Symbols } from "../../identifier.js";
@@ -22,6 +23,7 @@ import * as _ from "radash";
 import { PagedResult, PageUtils } from "../../core/model.js";
 import { TransactionHistorySchema } from "../../../prisma/generated/zod/index.js";
 import { nanoid } from "nanoid";
+import { getAddress } from "viem";
 
 @injectable()
 export class TransactionHistoryService {
@@ -39,7 +41,7 @@ export class TransactionHistoryService {
   async createTransactionHistory(
     input: TransactionHistoryCreateInput
   ): Promise<number> {
-    const { platform, chainId, tokenSymbol, transactionType } = input;
+    const { platform, chainId, tokenContractAddress, transactionType } = input;
     const blockChain = await this.blockChainService.findBlockChain({
       platform,
       chainId,
@@ -51,11 +53,11 @@ export class TransactionHistoryService {
     const tokenContract = await this.blockChainService.findTokenContract({
       platform,
       chainId,
-      tokenSymbol,
+      address: getAddress(tokenContractAddress),
     });
     if (!tokenContract) {
       throw PARAMETER_ERROR({
-        message: `Not supported token ${tokenSymbol}`,
+        message: `Not supported token ${tokenContractAddress}`,
       });
     }
 
@@ -63,8 +65,8 @@ export class TransactionHistoryService {
       ...input,
       transactionCode: nanoid(32),
       network: blockChain.network,
+      tokenSymbol: tokenContract.tokenSymbol,
       tokenDecimals: tokenContract.tokenDecimals,
-      tokenContractAddress: tokenContract.address,
       transactionTime: new Date(),
       transactionStatus: TransactionStatus.ACCEPTED,
       networkFee: 0,
@@ -211,13 +213,75 @@ export class TransactionHistoryService {
   async findTransactionHistory({
     id,
   }: TransactionHistoryFindInput): Promise<TransactionHistoryFindOutput> {
-    return await this.prisma.transactionHistory.findUnique({ where: { id } });
+    const transactionHistory = await this.prisma.transactionHistory.findUnique({
+      where: { id },
+    });
+
+    if (transactionHistory) {
+      const memberMap = await this.memberService.mappingMember({
+        ids: _.unique([
+          transactionHistory?.senderMemberId,
+          transactionHistory?.receiverMemberId,
+        ])
+          .filter((x) => x !== null)
+          .map((x) => x as number),
+      });
+
+      (
+        transactionHistory as TransactionHistoryQueryResult["record"][0]
+      ).senderMember = transactionHistory?.senderMemberId
+        ? memberMap.get(transactionHistory.senderMemberId) ?? null
+        : null;
+      (
+        transactionHistory as TransactionHistoryQueryResult["record"][0]
+      ).receiverMember = transactionHistory?.receiverMemberId
+        ? memberMap.get(transactionHistory.receiverMemberId) ?? null
+        : null;
+    }
+
+    return transactionHistory;
   }
 
-  async pageTransactionHistory(
-    input: TransactionHistoryQuery
-  ): Promise<TransactionHistoryQueryResult> {
+  async findTransactionHistoryByCode({
+    transactionCode,
+  }: TransactionHistoryFindByCodeInput): Promise<TransactionHistoryFindOutput> {
+    const transactionHistory = await this.prisma.transactionHistory.findUnique({
+      where: { transactionCode },
+    });
+
+    if (transactionHistory) {
+      const memberMap = await this.memberService.mappingMember({
+        ids: _.unique([
+          transactionHistory?.senderMemberId,
+          transactionHistory?.receiverMemberId,
+        ])
+          .filter((x) => x !== null)
+          .map((x) => x as number),
+      });
+
+      (
+        transactionHistory as TransactionHistoryQueryResult["record"][0]
+      ).senderMember = transactionHistory?.senderMemberId
+        ? memberMap.get(transactionHistory.senderMemberId) ?? null
+        : null;
+      (
+        transactionHistory as TransactionHistoryQueryResult["record"][0]
+      ).receiverMember = transactionHistory?.receiverMemberId
+        ? memberMap.get(transactionHistory.receiverMemberId) ?? null
+        : null;
+    }
+
+    return transactionHistory;
+  }
+
+  async pageTransactionHistory({
+    page,
+    pageSize: limit,
+    ...input
+  }: TransactionHistoryQuery): Promise<TransactionHistoryQueryResult> {
     const pageResult = await this.prisma.transactionHistory.paginate({
+      page,
+      limit,
       where: {
         ...input,
         transactionTime: {
@@ -225,14 +289,30 @@ export class TransactionHistoryService {
           lte: input.transactionTimeTo,
         },
       },
-      page: input.page,
-      limit: input.pageSize,
       orderBy: [
         {
           createAt: "desc",
         },
       ],
     });
+
+    const senderMemberIds = pageResult.result.map((x) => x.senderMemberId);
+    const receiverMemberIds = pageResult.result.map((x) => x.receiverMemberId);
+    const memberMap = await this.memberService.mappingMember({
+      ids: _.unique([...senderMemberIds, ...receiverMemberIds])
+        .filter((x) => x !== null)
+        .map((x) => x as number),
+    });
+
+    for (const item of pageResult.result) {
+      (item as TransactionHistoryQueryResult["record"][0]).senderMember =
+        item.senderMemberId ? memberMap.get(item.senderMemberId) ?? null : null;
+      (item as TransactionHistoryQueryResult["record"][0]).receiverMember =
+        item.receiverMemberId
+          ? memberMap.get(item.receiverMemberId) ?? null
+          : null;
+    }
+
     return PagedResult.fromPaginationResult(pageResult);
   }
 }
@@ -243,7 +323,7 @@ export const TransactionHistorySchemas = {
       description: "区块链平台: ETH 以太坊；SOLANA Solana;",
     }),
     chainId: z.number({ description: "区块链id" }),
-    tokenSymbol: z.string({ description: "代币符号" }),
+    tokenContractAddress: z.string({ description: "代币地址" }),
     transactionCategory: z.nativeEnum(TransactionCategory, {
       description: "交易分类",
     }),
@@ -290,11 +370,20 @@ export const TransactionHistorySchemas = {
     id: z.number({ description: "交易历史id" }),
   }),
   TransactionHistoryFindInput: z.object({
-    id: z.number({ description: "交易历史id" }),
+    id: z.coerce.number({ description: "交易历史id" }),
   }),
-  TransactionHistoryFindOutput: TransactionHistorySchema.nullable(),
+  TransactionHistoryFindByCodeInput: z.object({
+    transactionCode: z.string({ description: "交易编码" }),
+  }),
+  TransactionHistoryFindOutput: TransactionHistorySchema.extend({
+    senderMember: MemberSchemas.MemberOutput.nullish(),
+    receiverMember: MemberSchemas.MemberOutput.nullish(),
+  }).nullable(),
   TransactionHistoryQueryResult: PageUtils.asPagedResult(
-    TransactionHistorySchema
+    TransactionHistorySchema.extend({
+      senderMember: MemberSchemas.MemberOutput.nullish(),
+      receiverMember: MemberSchemas.MemberOutput.nullish(),
+    })
   ),
 };
 
@@ -309,6 +398,9 @@ export type TransactionHistoryDeclineInput = z.infer<
 >;
 export type TransactionHistoryFindInput = z.infer<
   typeof TransactionHistorySchemas.TransactionHistoryFindInput
+>;
+export type TransactionHistoryFindByCodeInput = z.infer<
+  typeof TransactionHistorySchemas.TransactionHistoryFindByCodeInput
 >;
 export type TransactionHistoryFindOutput = z.infer<
   typeof TransactionHistorySchemas.TransactionHistoryFindOutput

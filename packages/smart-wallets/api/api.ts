@@ -57,7 +57,7 @@ export declare namespace API {
   export type TransactionHistoryCreateInput = {
     platform: BlockChainPlatform;
     chainId: number;
-    tokenSymbol: string;
+    tokenContractAddress: string;
     transactionCategory: TransactionCategory;
     transactionType: TransactionType;
     receiverMemberId?: number;
@@ -69,6 +69,7 @@ export declare namespace API {
     platform?: BlockChainPlatform;
     chainId?: number;
     tokenSymbol?: string;
+    tokenContractAddress?: string;
     network?: BlockChainNetwork;
     transactionCategory?: TransactionCategory;
     transactionType?: TransactionType;

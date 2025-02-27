@@ -75,6 +75,8 @@ export const BlockChainScalarFieldEnumSchema = z.enum([
   "name",
   "show",
   "sort",
+  "alchemyRpc",
+  "alchemyNetwork",
 ]);
 
 export const TokenContractScalarFieldEnumSchema = z.enum([
@@ -93,8 +95,13 @@ export const TokenContractScalarFieldEnumSchema = z.enum([
   "tokenName",
   "tokenSymbol",
   "tokenDecimals",
+  "logo",
   "show",
   "sort",
+  "priceCurrency",
+  "priceValue",
+  "priceUpdateAt",
+  "priceAutoUpdate",
 ]);
 
 export const BizContractScalarFieldEnumSchema = z.enum([
@@ -162,7 +169,6 @@ export const PayLinkScalarFieldEnumSchema = z.enum([
   "platform",
   "chainId",
   "network",
-  "tokenSymbol",
   "tokenContractAddress",
   "senderWalletAddress",
   "bizContractAddress",
@@ -218,12 +224,19 @@ export const MemberLinkedAccountOrderByRelevanceFieldEnumSchema = z.enum([
   "search",
 ]);
 
-export const BlockChainOrderByRelevanceFieldEnumSchema = z.enum(["name"]);
+export const BlockChainOrderByRelevanceFieldEnumSchema = z.enum([
+  "name",
+  "alchemyRpc",
+  "alchemyNetwork",
+]);
 
 export const TokenContractOrderByRelevanceFieldEnumSchema = z.enum([
   "address",
   "tokenName",
   "tokenSymbol",
+  "logo",
+  "priceCurrency",
+  "priceValue",
 ]);
 
 export const BizContractOrderByRelevanceFieldEnumSchema = z.enum(["address"]);
@@ -243,7 +256,6 @@ export const TransactionHistoryOrderByRelevanceFieldEnumSchema = z.enum([
 
 export const PayLinkOrderByRelevanceFieldEnumSchema = z.enum([
   "transactionCode",
-  "tokenSymbol",
   "tokenContractAddress",
   "senderWalletAddress",
   "bizContractAddress",
@@ -542,6 +554,14 @@ export const BlockChainSchema = z.object({
    * 排序号
    */
   sort: z.number().int().describe("排序号"),
+  /**
+   * Alchemy RPC API地址
+   */
+  alchemyRpc: z.string().nullable().describe("Alchemy RPC API地址"),
+  /**
+   * Alchemy Network 枚举值
+   */
+  alchemyNetwork: z.string().nullable().describe("Alchemy Network 枚举值"),
 });
 
 export type BlockChain = z.infer<typeof BlockChainSchema>;
@@ -605,15 +625,19 @@ export const TokenContractSchema = z.object({
   /**
    * 代币名称
    */
-  tokenName: z.string().describe("代币名称"),
+  tokenName: z.string().nullable().describe("代币名称"),
   /**
    * 代币符号
    */
-  tokenSymbol: z.string().describe("代币符号"),
+  tokenSymbol: z.string().nullable().describe("代币符号"),
   /**
    * 代币精度
    */
-  tokenDecimals: z.number().int().describe("代币精度"),
+  tokenDecimals: z.number().int().nullable().describe("代币精度"),
+  /**
+   * 代币图标
+   */
+  logo: z.string().nullable().describe("代币图标"),
   /**
    * 是否在用户端展示
    */
@@ -622,6 +646,22 @@ export const TokenContractSchema = z.object({
    * 排序号
    */
   sort: z.number().int().describe("排序号"),
+  /**
+   * 代币价格 - 币种
+   */
+  priceCurrency: z.string().nullable().describe("代币价格 - 币种"),
+  /**
+   * 代币价格
+   */
+  priceValue: z.string().nullable().describe("代币价格"),
+  /**
+   * 代币价格更新时间
+   */
+  priceUpdateAt: z.coerce.date().nullable().describe("代币价格更新时间"),
+  /**
+   * 代币价格自动更新标识
+   */
+  priceAutoUpdate: z.boolean().describe("代币价格自动更新标识"),
 });
 
 export type TokenContract = z.infer<typeof TokenContractSchema>;
@@ -811,11 +851,11 @@ export const TransactionHistorySchema = z.object({
   /**
    * 代币符号
    */
-  tokenSymbol: z.string().describe("代币符号"),
+  tokenSymbol: z.string().nullable().describe("代币符号"),
   /**
    * 代币精度
    */
-  tokenDecimals: z.number().int().describe("代币精度"),
+  tokenDecimals: z.number().int().nullable().describe("代币精度"),
   /**
    * 代币合约地址
    */
@@ -886,10 +926,6 @@ export const PayLinkSchema = z.object({
    * 区块链id
    */
   chainId: z.number().int().describe("区块链id"),
-  /**
-   * 代币符号
-   */
-  tokenSymbol: z.string().describe("代币符号"),
   /**
    * 代币合约地址
    */

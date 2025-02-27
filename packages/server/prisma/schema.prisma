@@ -157,17 +157,21 @@ model BlockChain {
   deleteAt DateTime?
 
   /// 区块链平台
-  platform BlockChainPlatform
+  platform       BlockChainPlatform
   /// 区块链id
-  chainId  Int
+  chainId        Int
   /// 区块链网络
-  network  BlockChainNetwork
+  network        BlockChainNetwork
   /// 区块链名称
-  name     String
+  name           String
   /// 是否在用户端展示
-  show     Boolean            @default(true)
+  show           Boolean            @default(true)
   /// 排序号
-  sort     Int
+  sort           Int
+  /// Alchemy RPC API地址
+  alchemyRpc     String?            @db.VarChar(255)
+  /// Alchemy Network 枚举值
+  alchemyNetwork String?            @db.VarChar(255)
 
   @@unique([platform, chainId])
   @@map("block_chain")
@@ -201,18 +205,28 @@ model TokenContract {
   /// 代币标准
   erc           ERC
   /// 代币名称
-  tokenName     String
+  tokenName     String?
   /// 代币符号
-  tokenSymbol   String
+  tokenSymbol   String?
   /// 代币精度
-  tokenDecimals Int                @db.UnsignedInt
+  tokenDecimals Int?               @db.UnsignedInt
+  /// 代币图标
+  logo          String?            @db.VarChar(255)
 
   /// 是否在用户端展示
   show Boolean @default(true)
   /// 排序号
   sort Int
 
-  @@unique([platform, chainId, tokenSymbol])
+  /// 代币价格 - 币种
+  priceCurrency   String?   @default("usd") @db.VarChar(8)
+  /// 代币价格
+  priceValue      String?
+  /// 代币价格更新时间
+  priceUpdateAt   DateTime?
+  /// 代币价格自动更新标识
+  priceAutoUpdate Boolean   @default(false) @db.UnsignedTinyInt
+
   @@unique([platform, chainId, address])
   @@map("token_contract")
 }
@@ -338,9 +352,9 @@ model TransactionHistory {
   /// 区块链网络
   network              BlockChainNetwork
   /// 代币符号
-  tokenSymbol          String
+  tokenSymbol          String?
   /// 代币精度
-  tokenDecimals        Int                @db.UnsignedInt
+  tokenDecimals        Int?               @db.UnsignedInt
   /// 代币合约地址
   tokenContractAddress String             @db.VarChar(255)
 
@@ -383,8 +397,6 @@ model PayLink {
   chainId              Int
   /// 区块链网络
   network              BlockChainNetwork
-  /// 代币符号
-  tokenSymbol          String
   /// 代币合约地址
   tokenContractAddress String             @db.VarChar(255)
   /// 付款人 - 钱包地址

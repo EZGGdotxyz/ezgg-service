@@ -8,6 +8,7 @@ import { TransactionHistoryService } from "./transaction.service.js";
 import { PayLinkService } from "./paylink.service.js";
 import { Symbols } from "./identifier.js";
 import { SettingService } from "./setting.service.js";
+import { BalanceService } from "./balance.service.js";
 
 export * from "./identifier.js";
 export * from "./infrastructure.service.js";
@@ -15,6 +16,7 @@ export * from "./transaction.service.js";
 export * from "./paylink.service.js";
 export * from "./member.service.js";
 export * from "./setting.service.js";
+export * from "./balance.service.js";
 
 export const MemberModule = new ContainerModule((bind: interfaces.Bind) => {
   bind<BlockChainService>(Symbols.BlockChainService).to(BlockChainService);
@@ -25,4 +27,5 @@ export const MemberModule = new ContainerModule((bind: interfaces.Bind) => {
   );
   bind<PayLinkService>(Symbols.PayLinkService).to(PayLinkService);
   bind<SettingService>(Symbols.SettingService).to(SettingService);
+  bind<BalanceService>(Symbols.BalanceService).to(BalanceService);
 });

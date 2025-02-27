@@ -92,6 +92,7 @@ export const EnvironmentSchema = z.object({
   JWT_CORS_ORIGIN: z.string().optional(),
   PRIVY_APPID: z.string(),
   PRIVY_SECRET: z.string(),
+  ALCHEMY_API_KEY: z.string(),
 });
 
 // fastify.getEnvs<Environment>()

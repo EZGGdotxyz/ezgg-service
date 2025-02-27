@@ -208,7 +208,7 @@ export default function DashboardPage() {
       .createTransactionHistory({
         platform: BlockChainPlatform.ETH,
         chainId: selectedChain,
-        tokenSymbol: "USDC",
+        tokenContractAddress: USDC_ADDRESS,
         transactionCategory: TransactionCategory.SEND,
         transactionType: TransactionType.SEND,
         receiverMemberId: selectedMember,
@@ -266,7 +266,7 @@ export default function DashboardPage() {
       const { data: transaction } = await transactionApi.createTransactionHistory({
         platform: BlockChainPlatform.ETH,
         chainId: selectedChain,
-        tokenSymbol: "USDC",
+        tokenContractAddress: USDC_ADDRESS,
         transactionCategory: TransactionCategory.SEND,
         transactionType: TransactionType.PAY_LINK,
         amount: depositAmount * 1e6,

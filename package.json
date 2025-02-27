@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "server:dev": "pnpm -F @crypto-transfer/server dev",
     "server:deploy": "pnpm shipit --shipitfile deployment/crypto-transfer-server/shipitfile.cjs production all"
   },
   "keywords": [],
