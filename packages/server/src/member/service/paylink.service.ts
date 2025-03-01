@@ -9,7 +9,7 @@ import {
   TransactionStatus,
   TransactionType,
 } from "@prisma/client";
-import { MemberService } from "./index.js";
+import { MemberService, NotificationPublishService } from "./index.js";
 import { PARAMETER_ERROR } from "../../core/error.js";
 import { nanoid } from "nanoid";
 import * as _ from "radash";
@@ -21,7 +21,9 @@ export class PayLinkService {
     @inject(Symbols.PrismaClient)
     private readonly prisma: PrismaClient,
     @inject(Services.MemberService)
-    private readonly memberService: MemberService
+    private readonly memberService: MemberService,
+    @inject(Services.NotificationPublishService)
+    private readonly notificationPublicService: NotificationPublishService
   ) {}
 
   async createPlayLink({
@@ -106,6 +108,7 @@ export class PayLinkService {
           receiverMemberId: memberId,
           receiverDid: member.did,
           receiverWalletAddress: smartWalletAddress,
+          transactionStatus: TransactionStatus.ACCEPTED,
         },
         where: {
           id: transactionHistory.id,
@@ -119,6 +122,12 @@ export class PayLinkService {
           id: payLink.id,
         },
       });
+    });
+
+    await this.notificationPublicService.sendTransUpdate({
+      trans: (await this.prisma.transactionHistory.findUnique({
+        where: { id: transactionHistory.id },
+      }))!,
     });
   }
 

@@ -4,7 +4,9 @@ import {
   BizContractService,
 } from "./infrastructure.service.js";
 import { MemberService } from "./member.service.js";
+import { NotificationPublishService } from "./notification-publish.service.js";
 import { TransactionHistoryService } from "./transaction.service.js";
+import { NotificationService } from "./notification.service.js";
 import { PayLinkService } from "./paylink.service.js";
 import { Symbols } from "./identifier.js";
 import { SettingService } from "./setting.service.js";
@@ -17,11 +19,19 @@ export * from "./paylink.service.js";
 export * from "./member.service.js";
 export * from "./setting.service.js";
 export * from "./balance.service.js";
+export * from "./notification-publish.service.js";
+export * from "./notification.service.js";
 
 export const MemberModule = new ContainerModule((bind: interfaces.Bind) => {
   bind<BlockChainService>(Symbols.BlockChainService).to(BlockChainService);
   bind<BizContractService>(Symbols.BizContractService).to(BizContractService);
   bind<MemberService>(Symbols.MemberService).to(MemberService);
+  bind<NotificationService>(Symbols.NotificationService).to(
+    NotificationService
+  );
+  bind<NotificationPublishService>(Symbols.NotificationPublishService).to(
+    NotificationPublishService
+  );
   bind<TransactionHistoryService>(Symbols.TransactionHistoryService).to(
     TransactionHistoryService
   );

@@ -451,3 +451,51 @@ model Setting {
   /// 参与调研
   sysSurvey             Boolean @default(true) @db.UnsignedTinyInt
 }
+
+/// 站内信
+model Notification {
+  /// 主键
+  id       Int      @id @default(autoincrement()) @db.UnsignedInt
+  /// 创建人 id
+  createBy Int      @default(0) @db.UnsignedInt
+  /// 修改人 id
+  updateBy Int      @default(0) @db.UnsignedInt
+  /// 创建时间
+  createAt DateTime @default(now())
+  /// 修改时间
+  updateAt DateTime @default(now()) @updatedAt
+  /// 删除时间
+  deleteAt Int      @default(0) @db.UnsignedInt
+
+  /// 通知来源枚举：SYSTEM 系统自动触发；ADMIN 管理后台发送；
+  source       String       @db.VarChar(64)
+  /// 通知主题枚举：GENERAL 普通通知；TRANS_UPDATE 交易状态更新；ALARM 欺诈或可疑活动报警；PAY_REQUEST 付款请求通知；CUSTOMER_SUPPORT 客户支持通知；BALANCE_ALARM 账户余额警报；SECURE_ALARM 安全警报；SUMMARY 每日或每周摘要；APP_UPDATE 应用程序更新与增强；SALES_PROMOTION 促销优惠与更新；SURVEY 参与调研；
+  subject      String       @db.VarChar(64)
+  /// 交易状态更新动作枚举：REQUEST_ACCEPTED 请求已接受；REQUEST_DECLINED 请求已拒绝；PAY_LINK_ACCEPTED PayLink已接受；
+  action       String?      @db.VarChar(64)
+  /// 标题
+  title        String?      @db.VarChar(255)
+  /// 正文
+  context      String?      @db.Text
+  /// 接收人会员id
+  toMemberId   Int          @db.UnsignedInt
+  /// 接收人交易角色角色：NONE 未指定；SENDER 付款人；RECEIVER 收款人
+  toMemberRole ToMemberRole
+  /// 状态值：0 未读；1已读
+  status       Int          @default(0) @db.TinyInt
+  /// 通知时间
+  notifyAt     DateTime
+  /// 读取时间
+  readAt       DateTime?
+
+  /// 关联交易历史id
+  transactionHistoryId Int? @db.UnsignedInt
+
+  @@map("notification")
+}
+
+enum ToMemberRole {
+  NONE
+  SENDER
+  RECEIVER
+}

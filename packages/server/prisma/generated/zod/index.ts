@@ -198,6 +198,26 @@ export const SettingScalarFieldEnumSchema = z.enum([
   "sysSurvey",
 ]);
 
+export const NotificationScalarFieldEnumSchema = z.enum([
+  "id",
+  "createBy",
+  "updateBy",
+  "createAt",
+  "updateAt",
+  "deleteAt",
+  "source",
+  "subject",
+  "action",
+  "title",
+  "context",
+  "toMemberId",
+  "toMemberRole",
+  "status",
+  "notifyAt",
+  "readAt",
+  "transactionHistoryId",
+]);
+
 export const SortOrderSchema = z.enum(["asc", "desc"]);
 
 export const NullsOrderSchema = z.enum(["first", "last"]);
@@ -263,6 +283,14 @@ export const PayLinkOrderByRelevanceFieldEnumSchema = z.enum([
   "transactionHash",
 ]);
 
+export const NotificationOrderByRelevanceFieldEnumSchema = z.enum([
+  "source",
+  "subject",
+  "action",
+  "title",
+  "context",
+]);
+
 export const BlockChainPlatformSchema = z.enum(["ETH", "SOLANA"]);
 
 export type BlockChainPlatformType = `${z.infer<
@@ -314,6 +342,10 @@ export const TransactionTypeSchema = z.enum([
 ]);
 
 export type TransactionTypeType = `${z.infer<typeof TransactionTypeSchema>}`;
+
+export const ToMemberRoleSchema = z.enum(["NONE", "SENDER", "RECEIVER"]);
+
+export type ToMemberRoleType = `${z.infer<typeof ToMemberRoleSchema>}`;
 
 /////////////////////////////////////////
 // MODELS
@@ -1034,3 +1066,96 @@ export const SettingSchema = z.object({
 });
 
 export type Setting = z.infer<typeof SettingSchema>;
+
+/////////////////////////////////////////
+// NOTIFICATION SCHEMA
+/////////////////////////////////////////
+
+/**
+ * 站内信
+ */
+export const NotificationSchema = z.object({
+  /**
+   * 接收人交易角色角色：NONE 未指定；SENDER 付款人；RECEIVER 收款人
+   */
+  toMemberRole: ToMemberRoleSchema.describe(
+    "接收人交易角色角色：NONE 未指定；SENDER 付款人；RECEIVER 收款人"
+  ),
+  /**
+   * 主键
+   */
+  id: z.number().int().describe("主键"),
+  /**
+   * 创建人 id
+   */
+  createBy: z.number().int().describe("创建人 id"),
+  /**
+   * 修改人 id
+   */
+  updateBy: z.number().int().describe("修改人 id"),
+  /**
+   * 创建时间
+   */
+  createAt: z.coerce.date().describe("创建时间"),
+  /**
+   * 修改时间
+   */
+  updateAt: z.coerce.date().describe("修改时间"),
+  /**
+   * 删除时间
+   */
+  deleteAt: z.number().int().describe("删除时间"),
+  /**
+   * 通知来源枚举：SYSTEM 系统自动触发；ADMIN 管理后台发送；
+   */
+  source: z
+    .string()
+    .describe("通知来源枚举：SYSTEM 系统自动触发；ADMIN 管理后台发送；"),
+  /**
+   * 通知主题枚举：GENERAL 普通通知；TRANS_UPDATE 交易状态更新；ALARM 欺诈或可疑活动报警；PAY_REQUEST 付款请求通知；CUSTOMER_SUPPORT 客户支持通知；BALANCE_ALARM 账户余额警报；SECURE_ALARM 安全警报；SUMMARY 每日或每周摘要；APP_UPDATE 应用程序更新与增强；SALES_PROMOTION 促销优惠与更新；SURVEY 参与调研；
+   */
+  subject: z
+    .string()
+    .describe(
+      "通知主题枚举：GENERAL 普通通知；TRANS_UPDATE 交易状态更新；ALARM 欺诈或可疑活动报警；PAY_REQUEST 付款请求通知；CUSTOMER_SUPPORT 客户支持通知；BALANCE_ALARM 账户余额警报；SECURE_ALARM 安全警报；SUMMARY 每日或每周摘要；APP_UPDATE 应用程序更新与增强；SALES_PROMOTION 促销优惠与更新；SURVEY 参与调研；"
+    ),
+  /**
+   * 交易状态更新动作枚举：REQUEST_ACCEPTED 请求已接受；REQUEST_DECLINED 请求已拒绝；PAY_LINK_ACCEPTED PayLink已接受；
+   */
+  action: z
+    .string()
+    .nullable()
+    .describe(
+      "交易状态更新动作枚举：REQUEST_ACCEPTED 请求已接受；REQUEST_DECLINED 请求已拒绝；PAY_LINK_ACCEPTED PayLink已接受；"
+    ),
+  /**
+   * 标题
+   */
+  title: z.string().nullable().describe("标题"),
+  /**
+   * 正文
+   */
+  context: z.string().nullable().describe("正文"),
+  /**
+   * 接收人会员id
+   */
+  toMemberId: z.number().int().describe("接收人会员id"),
+  /**
+   * 状态值：0 未读；1已读
+   */
+  status: z.number().int().describe("状态值：0 未读；1已读"),
+  /**
+   * 通知时间
+   */
+  notifyAt: z.coerce.date().describe("通知时间"),
+  /**
+   * 读取时间
+   */
+  readAt: z.coerce.date().nullable().describe("读取时间"),
+  /**
+   * 关联交易历史id
+   */
+  transactionHistoryId: z.number().int().nullable().describe("关联交易历史id"),
+});
+
+export type Notification = z.infer<typeof NotificationSchema>;

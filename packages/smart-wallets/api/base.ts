@@ -1,8 +1,8 @@
 import axios from "axios";
 
 const apiClient = axios.create({
-  baseURL: "https://api.catfoodworks.com",
-  // baseURL: "http://localhost:3001",
+  // baseURL: "https://api.catfoodworks.com",
+  baseURL: "http://localhost:3001",
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",

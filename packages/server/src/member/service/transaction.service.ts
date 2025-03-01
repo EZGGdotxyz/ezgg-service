@@ -4,6 +4,7 @@ import {
   BlockChainPlatform,
   Prisma,
   TransactionCategory,
+  TransactionHistory,
   TransactionStatus,
   TransactionType,
 } from "@prisma/client";
@@ -15,6 +16,7 @@ import {
   BlockChainService,
   MemberSchemas,
   MemberService,
+  NotificationPublishService,
 } from "./index.js";
 import { Symbols } from "../../identifier.js";
 import { Symbols as Services } from "./identifier.js";
@@ -35,7 +37,9 @@ export class TransactionHistoryService {
     @inject(Services.BlockChainService)
     private readonly blockChainService: BlockChainService,
     @inject(Services.BizContractService)
-    private readonly bizContractService: BizContractService
+    private readonly bizContractService: BizContractService,
+    @inject(Services.NotificationPublishService)
+    private readonly notificationPublicService: NotificationPublishService
   ) {}
 
   async createTransactionHistory(
@@ -155,8 +159,17 @@ export class TransactionHistoryService {
 
     // TODO 调用合约计算网络费用
 
-    const { id } = await this.prisma.transactionHistory.create({ data });
-    return id;
+    const trans = await this.prisma.transactionHistory.create({
+      data,
+    });
+
+    if (transactionType == TransactionType.SEND) {
+      await this.notificationPublicService.sendTransSend({ trans });
+    } else if (transactionType == TransactionType.REQUEST) {
+      await this.notificationPublicService.sendTransRequest({ trans });
+    }
+
+    return trans.id;
   }
 
   async updateTransactionHash({
@@ -187,6 +200,14 @@ export class TransactionHistoryService {
       },
       where: { id },
     });
+
+    if (transactionHistory.transactionType == TransactionType.REQUEST) {
+      await this.notificationPublicService.sendTransUpdate({
+        trans: (await this.prisma.transactionHistory.findUnique({
+          where: { id },
+        }))!,
+      });
+    }
   }
 
   async declineTransactionHistory({ id }: TransactionHistoryDeclineInput) {
@@ -208,6 +229,14 @@ export class TransactionHistoryService {
       },
       where: { id },
     });
+
+    if (transactionHistory.transactionType == TransactionType.REQUEST) {
+      await this.notificationPublicService.sendTransUpdate({
+        trans: (await this.prisma.transactionHistory.findUnique({
+          where: { id },
+        }))!,
+      });
+    }
   }
 
   async findTransactionHistory({
@@ -296,15 +325,48 @@ export class TransactionHistoryService {
       ],
     });
 
-    const senderMemberIds = pageResult.result.map((x) => x.senderMemberId);
-    const receiverMemberIds = pageResult.result.map((x) => x.receiverMemberId);
+    await this.fillData(pageResult.result);
+
+    return PagedResult.fromPaginationResult(pageResult);
+  }
+
+  async listTransactionHistory({
+    ids,
+  }: {
+    ids: number[];
+  }): Promise<TransactionHistoryQueryResult["record"]> {
+    if (_.isEmpty(ids)) {
+      return [];
+    }
+    const transactionHistoryList =
+      await this.prisma.transactionHistory.findMany({
+        where: {
+          id: {
+            in: ids,
+          },
+        },
+        orderBy: [
+          {
+            createAt: "desc",
+          },
+        ],
+      });
+
+    await this.fillData(transactionHistoryList);
+
+    return transactionHistoryList;
+  }
+
+  private async fillData(trans: TransactionHistory[]) {
+    const senderMemberIds = trans.map((x) => x.senderMemberId);
+    const receiverMemberIds = trans.map((x) => x.receiverMemberId);
     const memberMap = await this.memberService.mappingMember({
       ids: _.unique([...senderMemberIds, ...receiverMemberIds])
         .filter((x) => x !== null)
         .map((x) => x as number),
     });
 
-    for (const item of pageResult.result) {
+    for (const item of trans) {
       (item as TransactionHistoryQueryResult["record"][0]).senderMember =
         item.senderMemberId ? memberMap.get(item.senderMemberId) ?? null : null;
       (item as TransactionHistoryQueryResult["record"][0]).receiverMember =
@@ -312,8 +374,6 @@ export class TransactionHistoryService {
           ? memberMap.get(item.receiverMemberId) ?? null
           : null;
     }
-
-    return PagedResult.fromPaginationResult(pageResult);
   }
 }
 

@@ -16,8 +16,8 @@ module.exports = (shipit) => {
   shipit.initConfig({
     default: {},
     production: {
-      key: "./deployment/keys/drol_app_rsa",
-      servers: "app@120.76.41.50",
+      key: "./deployment/keys/snapx_pro_rsa",
+      servers: "app@ec2-18-142-44-209.ap-southeast-1.compute.amazonaws.com",
     },
     // Other environments (staging, etc.)
   });
