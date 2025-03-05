@@ -1,5 +1,10 @@
 import { FastifyPluginAsyncZod } from "fastify-type-provider-zod";
-import { MemberSchemas, MemberService } from "../service/member.service.js";
+import {
+  MemberOutput,
+  MemberPageResult,
+  MemberSchemas,
+  MemberService,
+} from "../service/member.service.js";
 import { z } from "zod";
 import { Symbols } from "../service/index.js";
 import { ApiUtils } from "../../core/model.js";
@@ -73,6 +78,33 @@ const route: FastifyPluginAsyncZod = async (fastify) => {
   );
 
   fastify.get(
+    "/find-user/id/:id",
+    {
+      schema: {
+        tags: [TAG],
+        summary: "获取用户信息",
+        params: z.object({
+          id: z.coerce.number({ description: "用户ID" }),
+        }),
+        response: {
+          200: ApiUtils.asApiResult(MemberSchemas.MemberOutput.nullable()),
+        },
+      },
+      preSerialization: [
+        fastify.handlePhoneMask<MemberOutput | null>(
+          (data) => data?.memberLinkedAccount ?? []
+        ),
+      ],
+    },
+    async (request) =>
+      ApiUtils.ok(
+        await fastify.diContainer
+          .get<MemberService>(Symbols.MemberService)
+          .findMember({ id: request.params.id })
+      )
+  );
+
+  fastify.get(
     "/page-member",
     {
       schema: {
@@ -85,6 +117,11 @@ const route: FastifyPluginAsyncZod = async (fastify) => {
         },
       },
       onRequest: [fastify.privyAuth],
+      preSerialization: [
+        fastify.handlePhoneMask<MemberPageResult>((data) =>
+          data.record.flatMap((x) => x.memberLinkedAccount)
+        ),
+      ],
     },
     async (request) =>
       ApiUtils.ok(

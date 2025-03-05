@@ -8,6 +8,12 @@ import { AdminModule } from "../admin/service/index.js";
 import { PrivyClient } from "@privy-io/server-auth";
 import { MemberModule } from "../member/service/index.js";
 import { AlchemyFactory } from "./alchemy.js";
+import { fileURLToPath } from "url";
+import * as path from "path";
+import { OpenExchangeRates } from "./open-exchange-rates.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const plugins: FastifyPluginAsync = async (fastify) => {
   const ProviderModule = new ContainerModule((bind: interfaces.Bind) => {
@@ -16,6 +22,12 @@ const plugins: FastifyPluginAsync = async (fastify) => {
     bind<PrivyClient>(Symbols.PrivyClient).toConstantValue(fastify.privy);
     bind<AlchemyFactory>(Symbols.AlchemyFactory).toConstantValue(
       fastify.alchemy
+    );
+    bind<string>(Symbols.ROOT_PATH).toConstantValue(
+      path.dirname(path.dirname(__dirname))
+    );
+    bind<OpenExchangeRates>(Symbols.OpenExchangeRates).toConstantValue(
+      fastify.openExchangeRates
     );
   });
 
@@ -27,7 +39,7 @@ const plugins: FastifyPluginAsync = async (fastify) => {
 
 const options: PluginMetadata = {
   name: "inversify",
-  dependencies: ["prisma", "privy", "alchemy"],
+  dependencies: ["prisma", "privy", "alchemy", "open-exchange-rates"],
 };
 
 export default fp(plugins, options);

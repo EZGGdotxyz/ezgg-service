@@ -24,7 +24,12 @@ import {
   User,
 } from "@privy-io/server-auth";
 import { z } from "zod";
-import { Member, Prisma } from "@prisma/client";
+import {
+  Member,
+  MemberRecentAction,
+  Prisma,
+  TransactionHistory,
+} from "@prisma/client";
 import { DATA_NOT_EXIST } from "../../core/error.js";
 import { PagedResult, PageUtils } from "../../core/model.js";
 import {
@@ -32,6 +37,7 @@ import {
   MemberSchema,
 } from "../../../prisma/generated/zod/index.js";
 import * as _ from "radash";
+import { CodeUtil } from "../../core/utils.js";
 @injectable()
 export class MemberService {
   constructor(
@@ -47,11 +53,16 @@ export class MemberService {
     avatar,
   }: UpdateMemberInput): Promise<void> {
     const { isNew, member } = await this.findOrCreateMember({ user });
-    await this.syncLinkedAccounts({ user });
+    if (isNew) {
+      await this.syncLinkedAccounts({ user });
+    }
+
     await this.prisma.$transaction(async (tx) => {
       await tx.member.update({
         data: {
-          nickname,
+          nickname: isNew
+            ? nickname ?? `Crypto-${CodeUtil.generateSortCode(8)}`
+            : nickname,
           avatar,
         },
         where: { id: member.id },
@@ -98,32 +109,54 @@ export class MemberService {
     });
   }
 
-  async pageMember(input: MemberPageQuery): Promise<MemberPageResult> {
+  async pageMember({
+    page,
+    pageSize: limit,
+    search,
+    recent,
+    memberId,
+  }: MemberPageQuery): Promise<MemberPageResult> {
+    let memberIds: number[] | undefined;
+    if (recent && memberId) {
+      const memberRecentList = await this.prisma.memberRecent.findMany({
+        where: { memberId },
+        orderBy: { recent: "desc" },
+      });
+      memberIds = memberRecentList.map((x) => x.relateMemberId);
+      if (_.isEmpty(memberIds)) {
+        return PagedResult.empty({ page, pageSize: limit });
+      }
+    }
+
     return PagedResult.fromPaginationResult(
       await this.prisma.member.paginate({
         include: {
           memberLinkedAccount: true,
         },
         where: {
+          id: {
+            in: memberIds,
+            not: memberId,
+          },
           OR: [
             {
               memberLinkedAccount: {
                 some: {
                   search: {
-                    contains: input.search,
+                    contains: search,
                   },
                 },
               },
             },
             {
               nickname: {
-                contains: input.search,
+                contains: search,
               },
             },
           ],
         },
-        page: input.page,
-        limit: input.pageSize,
+        page,
+        limit,
         orderBy: [
           {
             createAt: "desc",
@@ -131,6 +164,37 @@ export class MemberService {
         ],
       })
     );
+  }
+
+  async searchMember({ search }: { search: string }): Promise<Member[]> {
+    return await this.prisma.member.findMany({
+      include: {
+        memberLinkedAccount: true,
+      },
+      where: {
+        OR: [
+          {
+            memberLinkedAccount: {
+              some: {
+                search: {
+                  contains: search,
+                },
+              },
+            },
+          },
+          {
+            nickname: {
+              contains: search,
+            },
+          },
+        ],
+      },
+      orderBy: [
+        {
+          createAt: "desc",
+        },
+      ],
+    });
   }
 
   async mappingMember({
@@ -191,8 +255,13 @@ export class MemberService {
     };
   }
 
-  async findMember({ id }: { id: number }): Promise<Member | null> {
-    return this.prisma.member.findUnique({ where: { id } });
+  async findMember({ id }: { id: number }): Promise<MemberOutput | null> {
+    return this.prisma.member.findUnique({
+      where: { id },
+      include: {
+        memberLinkedAccount: true,
+      },
+    });
   }
 
   async findSmartWalletAddress({
@@ -202,6 +271,60 @@ export class MemberService {
   }): Promise<string | null> {
     const user = await this.privy.getUserById(did);
     return user.smartWallet?.address ?? null;
+  }
+
+  async updateMemberRecent({
+    memberId,
+    trans,
+  }: {
+    memberId: number;
+    trans: TransactionHistory;
+  }) {
+    if (!trans.receiverMemberId || !trans.senderMemberId) {
+      return;
+    }
+    let relateMemberId;
+    let action;
+    if (
+      memberId === trans.receiverMemberId &&
+      memberId !== trans.senderMemberId
+    ) {
+      relateMemberId = trans.senderMemberId;
+      action = MemberRecentAction.RECEIVE;
+    } else if (
+      memberId !== trans.receiverMemberId &&
+      memberId === trans.senderMemberId
+    ) {
+      relateMemberId = trans.receiverMemberId;
+      action = MemberRecentAction.SEND;
+    } else {
+      return;
+    }
+    const memberRecent = await this.prisma.memberRecent.findFirst({
+      where: {
+        memberId,
+        relateMemberId,
+      },
+    });
+    if (memberRecent) {
+      await this.prisma.memberRecent.update({
+        where: {
+          id: memberRecent.id,
+        },
+        data: {
+          action,
+          recent: new Date(),
+        },
+      });
+    } else {
+      await this.prisma.memberRecent.create({
+        data: {
+          memberId,
+          relateMemberId,
+          action: action!,
+        },
+      });
+    }
   }
 
   private searchOf({ type, ...rest }: LinkedAccountWithMetadata): string {
@@ -248,6 +371,11 @@ export class MemberService {
   }
 }
 
+const MemberLinkedAccountOutput = MemberLinkedAccountSchema.pick({
+  type: true,
+  search: true,
+});
+
 export const MemberSchemas = {
   UpdateMemberInput: z.object({
     nickname: z.string({ description: "昵称" }).optional(),
@@ -256,22 +384,25 @@ export const MemberSchemas = {
   MemberPageQuery: PageUtils.asPageable(
     z.object({
       search: z.string({ description: "检索条件" }).optional(),
+      recent: z.boolean({ description: "检索最近交易会员" }).optional(),
     })
   ),
   MemberPageResult: PageUtils.asPagedResult(
     MemberSchema.extend({
-      memberLinkedAccount: z.array(MemberLinkedAccountSchema),
+      memberLinkedAccount: z.array(MemberLinkedAccountOutput),
     })
   ),
   MemberOutput: MemberSchema.extend({
-    memberLinkedAccount: z.array(MemberLinkedAccountSchema),
+    memberLinkedAccount: z.array(MemberLinkedAccountOutput),
   }),
 };
 
 export type UpdateMemberInput = {
   user: User;
 } & z.infer<typeof MemberSchemas.UpdateMemberInput>;
-export type MemberPageQuery = z.infer<typeof MemberSchemas.MemberPageQuery>;
+export type MemberPageQuery = z.infer<typeof MemberSchemas.MemberPageQuery> & {
+  memberId?: number;
+};
 export type MemberPageResult = z.infer<typeof MemberSchemas.MemberPageResult>;
 export type MemberOutput = z.infer<typeof MemberSchemas.MemberOutput>;
 

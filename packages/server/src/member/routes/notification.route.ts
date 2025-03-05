@@ -1,5 +1,9 @@
 import { FastifyPluginAsyncZod } from "fastify-type-provider-zod";
-import { NotificationService, NotificationSchemas } from "../service/index.js";
+import {
+  NotificationService,
+  NotificationSchemas,
+  NotificationPageResult,
+} from "../service/index.js";
 import { Symbols } from "../service/index.js";
 import { ApiUtils } from "../../core/model.js";
 import { z } from "zod";
@@ -21,6 +25,14 @@ const route: FastifyPluginAsyncZod = async (fastify) => {
         },
       },
       onRequest: [fastify.privyAuth],
+      preSerialization: [
+        fastify.handlePhoneMask<NotificationPageResult>((data) =>
+          data.record.flatMap((x) => [
+            ...(x?.transaction?.senderMember?.memberLinkedAccount ?? []),
+            ...(x?.transaction?.receiverMember?.memberLinkedAccount ?? []),
+          ])
+        ),
+      ],
     },
     async (request) =>
       ApiUtils.ok(
@@ -72,6 +84,28 @@ const route: FastifyPluginAsyncZod = async (fastify) => {
         await fastify.diContainer
           .get<NotificationService>(Symbols.NotificationService)
           .updateAllNotificationStatus({
+            toMemberId: request.privyUser?.customMetadata.id! as number,
+          })
+      )
+  );
+  fastify.get(
+    "/get-unread-count",
+    {
+      schema: {
+        tags: [TAG],
+        summary: "获取未读数",
+        security: [{ authorization: [] }],
+        response: {
+          200: ApiUtils.asApiResult(z.number()),
+        },
+      },
+      onRequest: [fastify.privyAuth],
+    },
+    async (request) =>
+      ApiUtils.ok(
+        await fastify.diContainer
+          .get<NotificationService>(Symbols.NotificationService)
+          .getUnreadCount({
             toMemberId: request.privyUser?.customMetadata.id! as number,
           })
       )

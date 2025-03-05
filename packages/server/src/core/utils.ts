@@ -18,8 +18,8 @@ export const CodeUtil = {
   generateNumberOnlyCode: async () => {
     return alphabetNumberOnly(18);
   },
-  generateSortCode: async () => {
-    return shortCode();
+  generateSortCode: async (size?: number) => {
+    return shortCode(size);
   },
 };
 

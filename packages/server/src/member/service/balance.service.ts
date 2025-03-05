@@ -11,6 +11,7 @@ import { Network } from "alchemy-sdk";
 import type { AlchemyFactory } from "../../plugins/alchemy.js";
 import { TokenContractSchema } from "../../../prisma/generated/zod/index.js";
 import { Decimal } from "decimal.js";
+import type { OpenExchangeRates } from "../../plugins/open-exchange-rates.js";
 
 @injectable()
 export class BalanceService {
@@ -18,7 +19,9 @@ export class BalanceService {
     @inject(Services.BlockChainService)
     private readonly blockChainService: BlockChainService,
     @inject(Symbols.AlchemyFactory)
-    private readonly alchemy: AlchemyFactory
+    private readonly alchemy: AlchemyFactory,
+    @inject(Symbols.OpenExchangeRates)
+    private readonly openExchangeRates: OpenExchangeRates
   ) {}
 
   async findBalance({
@@ -52,7 +55,7 @@ export class BalanceService {
       address: getAddress(address),
     });
 
-    const [tokenAmount, currencyAmount] = this.formatAmount({
+    const [tokenAmount, currencyAmount] = await this.formatAmount({
       currency,
       tokenBalance: tokenBalances[0].tokenBalance,
       token,
@@ -97,7 +100,7 @@ export class BalanceService {
     const tokens: BalanceOutput["tokens"] = [];
     for (const { contractAddress, tokenBalance } of tokenBalances) {
       const token = tokenMap.get(getAddress(contractAddress));
-      const [tokenAmount, currencyAmount] = this.formatAmount({
+      const [tokenAmount, currencyAmount] = await this.formatAmount({
         currency,
         tokenBalance,
         token,
@@ -124,20 +127,28 @@ export class BalanceService {
     };
   }
 
-  private formatAmount({
+  private async formatAmount({
     currency,
     tokenBalance,
     token,
   }: {
-    currency: String;
+    currency: string;
     tokenBalance: string | null;
     token: TokenContract | undefined;
-  }): [string, string | undefined] {
+  }): Promise<[string, string | undefined]> {
+    let rate = 1;
+    if (currency != "USD") {
+      const exchangeRates = await this.openExchangeRates.latest();
+      rate = exchangeRates.rates[currency] ?? 1;
+    }
     const tokenAmount = token?.tokenDecimals
       ? formatUnits(BigInt(tokenBalance ?? "0"), token.tokenDecimals)
       : tokenBalance ?? "0";
-    const currencyAmount = token?.priceValue
-      ? new Decimal(tokenAmount).mul(new Decimal(token.priceValue)).toFixed()
+    let currencyAmount = token?.priceValue
+      ? new Decimal(tokenAmount)
+          .mul(new Decimal(token.priceValue))
+          .mul(rate)
+          .toFixed()
       : undefined;
 
     return [tokenAmount, currencyAmount];
@@ -145,7 +156,7 @@ export class BalanceService {
 }
 
 const BalanceTokenSchema = z.object({
-  currency: z.string({ description: "货币符号：usd/hkd/cny" }),
+  currency: z.string({ description: "货币符号：USD/HKD/CNY" }),
   currencyAmount: z.string({ description: "货币余额" }).optional(),
   token: TokenContractSchema.optional(),
   tokenAmount: z.string({ description: "代币数量" }),
@@ -155,18 +166,24 @@ export const BalanceSchemas = {
   BalanceFindInput: z.object({
     platform: z.nativeEnum(BlockChainPlatform),
     chainId: z.coerce.number(),
-    currency: z.string({ description: "货币符号：usd/hkd/cny" }),
+    currency: z
+      .string({ description: "货币符号：USD/HKD/CNY" })
+      .optional()
+      .default("USD"),
     address: z.string({ description: "代币合约地址" }),
   }),
   BalanceFindOutput: BalanceTokenSchema,
   BalanceQuery: z.object({
     platform: z.nativeEnum(BlockChainPlatform),
     chainId: z.coerce.number(),
-    currency: z.string({ description: "货币符号：usd/hkd/cny" }),
+    currency: z
+      .string({ description: "货币符号：USD/HKD/CNY" })
+      .optional()
+      .default("USD"),
   }),
   BalanceOutput: z.object({
     summary: z.object({
-      currency: z.string({ description: "货币符号：usd/hkd/cny" }),
+      currency: z.string({ description: "货币符号：USD/HKD/CNY" }),
       balance: z.string({ description: "货币余额" }),
     }),
     tokens: z.array(BalanceTokenSchema),

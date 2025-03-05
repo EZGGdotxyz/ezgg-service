@@ -1,4 +1,4 @@
-import { useFundWallet, usePrivy } from "@privy-io/react-auth";
+import { useFundWallet, usePrivy, useUser } from "@privy-io/react-auth";
 import { useSmartWallets } from "@privy-io/react-auth/smart-wallets";
 import Head from "next/head";
 import { useRouter } from "next/router";

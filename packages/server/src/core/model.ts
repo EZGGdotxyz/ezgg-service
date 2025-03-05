@@ -93,6 +93,9 @@ export const EnvironmentSchema = z.object({
   PRIVY_APPID: z.string(),
   PRIVY_SECRET: z.string(),
   ALCHEMY_API_KEY: z.string(),
+  MAX_FILE_SIZE: z.number().optional(),
+  FILE_BASE_URL: z.string(),
+  OPEN_EXCHANGE_RATES_APP_ID: z.string(), // 新增环境变量
 });
 
 // fastify.getEnvs<Environment>()

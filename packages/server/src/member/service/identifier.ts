@@ -8,4 +8,5 @@ export const Symbols = {
   TransactionHistoryService: Symbol.for("TransactionHistoryService"),
   SettingService: Symbol.for("SettingService"),
   BalanceService: Symbol.for("BalanceService"),
+  FileService: Symbol.for("FileService"),
 };

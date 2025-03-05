@@ -1,10 +1,13 @@
 import { FastifyPluginAsyncZod } from "fastify-type-provider-zod";
 import {
+  TransactionHistoryFindOutput,
+  TransactionHistoryQueryResult,
   TransactionHistorySchemas,
   TransactionHistoryService,
 } from "../service/index.js";
 import { Symbols } from "../service/index.js";
 import { ApiUtils } from "../../core/model.js";
+import { z } from "zod";
 
 export const autoPrefix = "/member/transaction/history";
 const TAG = "Transaction History";
@@ -25,6 +28,12 @@ const route: FastifyPluginAsyncZod = async (fastify) => {
         },
       },
       onRequest: [fastify.privyAuth],
+      preSerialization: [
+        fastify.handlePhoneMask<TransactionHistoryFindOutput>((data) => [
+          ...(data?.senderMember?.memberLinkedAccount ?? []),
+          ...(data?.receiverMember?.memberLinkedAccount ?? []),
+        ]),
+      ],
     },
     async (request) => {
       const service = fastify.diContainer.get<TransactionHistoryService>(
@@ -54,13 +63,21 @@ const route: FastifyPluginAsyncZod = async (fastify) => {
         },
       },
       onRequest: [fastify.privyAuth],
+      preSerialization: [
+        fastify.handlePhoneMask<TransactionHistoryFindOutput>((data) => [
+          ...(data?.senderMember?.memberLinkedAccount ?? []),
+          ...(data?.receiverMember?.memberLinkedAccount ?? []),
+        ]),
+      ],
     },
     async (request) => {
       const service = fastify.diContainer.get<TransactionHistoryService>(
         Symbols.TransactionHistoryService
       );
+      const memberId = request.privyUser?.customMetadata.id! as number;
       await service.updateTransactionHash({
         ...request.body,
+        memberId,
       });
       return ApiUtils.ok(
         await service.findTransactionHistory({ id: request.body.id })
@@ -83,6 +100,12 @@ const route: FastifyPluginAsyncZod = async (fastify) => {
         },
       },
       onRequest: [fastify.privyAuth],
+      preSerialization: [
+        fastify.handlePhoneMask<TransactionHistoryFindOutput>((data) => [
+          ...(data?.senderMember?.memberLinkedAccount ?? []),
+          ...(data?.receiverMember?.memberLinkedAccount ?? []),
+        ]),
+      ],
     },
     async (request) => {
       const service = fastify.diContainer.get<TransactionHistoryService>(
@@ -105,6 +128,12 @@ const route: FastifyPluginAsyncZod = async (fastify) => {
         summary: "通过id获取交易历史记录详情",
         security: [{ authorization: [] }],
         params: TransactionHistorySchemas.TransactionHistoryFindInput,
+        querystring: z.object({
+          currency: z
+            .string({ description: "货币符号：USD/HKD/CNY" })
+            .optional()
+            .default("USD"),
+        }),
         response: {
           200: ApiUtils.asApiResult(
             TransactionHistorySchemas.TransactionHistoryFindOutput
@@ -112,13 +141,22 @@ const route: FastifyPluginAsyncZod = async (fastify) => {
         },
       },
       onRequest: [fastify.privyAuth],
+      preSerialization: [
+        fastify.handlePhoneMask<TransactionHistoryFindOutput>((data) => [
+          ...(data?.senderMember?.memberLinkedAccount ?? []),
+          ...(data?.receiverMember?.memberLinkedAccount ?? []),
+        ]),
+      ],
     },
     async (request) => {
       const service = fastify.diContainer.get<TransactionHistoryService>(
         Symbols.TransactionHistoryService
       );
       return ApiUtils.ok(
-        await service.findTransactionHistory({ id: request.params.id })
+        await service.findTransactionHistory({
+          currency: request.query.currency,
+          id: request.params.id,
+        })
       );
     }
   );
@@ -129,15 +167,25 @@ const route: FastifyPluginAsyncZod = async (fastify) => {
       schema: {
         tags: [TAG],
         summary: "通过transactionCode获取交易历史记录详情",
-        security: [{ authorization: [] }],
         params: TransactionHistorySchemas.TransactionHistoryFindByCodeInput,
+        querystring: z.object({
+          currency: z
+            .string({ description: "货币符号：USD/HKD/CNY" })
+            .optional()
+            .default("USD"),
+        }),
         response: {
           200: ApiUtils.asApiResult(
             TransactionHistorySchemas.TransactionHistoryFindOutput
           ),
         },
       },
-      onRequest: [fastify.privyAuth],
+      preSerialization: [
+        fastify.handlePhoneMask<TransactionHistoryFindOutput>((data) => [
+          ...(data?.senderMember?.memberLinkedAccount ?? []),
+          ...(data?.receiverMember?.memberLinkedAccount ?? []),
+        ]),
+      ],
     },
     async (request) => {
       const service = fastify.diContainer.get<TransactionHistoryService>(
@@ -145,6 +193,7 @@ const route: FastifyPluginAsyncZod = async (fastify) => {
       );
       return ApiUtils.ok(
         await service.findTransactionHistoryByCode({
+          currency: request.query.currency,
           transactionCode: request.params.transactionCode,
         })
       );
@@ -166,6 +215,14 @@ const route: FastifyPluginAsyncZod = async (fastify) => {
         },
       },
       onRequest: [fastify.privyAuth],
+      preSerialization: [
+        fastify.handlePhoneMask<TransactionHistoryQueryResult>((data) =>
+          data.record.flatMap((x) => [
+            ...(x?.senderMember?.memberLinkedAccount ?? []),
+            ...(x?.receiverMember?.memberLinkedAccount ?? []),
+          ])
+        ),
+      ],
     },
     async (request) =>
       ApiUtils.ok(

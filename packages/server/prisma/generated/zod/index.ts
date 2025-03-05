@@ -46,6 +46,20 @@ export const MemberScalarFieldEnumSchema = z.enum([
   "avatar",
 ]);
 
+export const MemberRecentScalarFieldEnumSchema = z.enum([
+  "id",
+  "deleted",
+  "createBy",
+  "updateBy",
+  "createAt",
+  "updateAt",
+  "deleteAt",
+  "memberId",
+  "relateMemberId",
+  "action",
+  "recent",
+]);
+
 export const MemberLinkedAccountScalarFieldEnumSchema = z.enum([
   "id",
   "deleted",
@@ -151,6 +165,7 @@ export const TransactionHistoryScalarFieldEnumSchema = z.enum([
   "tokenSymbol",
   "tokenDecimals",
   "tokenContractAddress",
+  "tokenPrice",
   "amount",
   "networkFee",
   "message",
@@ -200,6 +215,7 @@ export const SettingScalarFieldEnumSchema = z.enum([
 
 export const NotificationScalarFieldEnumSchema = z.enum([
   "id",
+  "deleted",
   "createBy",
   "updateBy",
   "createAt",
@@ -271,6 +287,7 @@ export const TransactionHistoryOrderByRelevanceFieldEnumSchema = z.enum([
   "transactionHash",
   "tokenSymbol",
   "tokenContractAddress",
+  "tokenPrice",
   "message",
 ]);
 
@@ -290,6 +307,12 @@ export const NotificationOrderByRelevanceFieldEnumSchema = z.enum([
   "title",
   "context",
 ]);
+
+export const MemberRecentActionSchema = z.enum(["SEND", "RECEIVE"]);
+
+export type MemberRecentActionType = `${z.infer<
+  typeof MemberRecentActionSchema
+>}`;
 
 export const BlockChainPlatformSchema = z.enum(["ETH", "SOLANA"]);
 
@@ -339,6 +362,7 @@ export const TransactionTypeSchema = z.enum([
   "WITHDRAW",
   "PAY_LINK",
   "QR_CODE",
+  "REQUEST_LINK",
 ]);
 
 export type TransactionTypeType = `${z.infer<typeof TransactionTypeSchema>}`;
@@ -468,6 +492,59 @@ export const MemberSchema = z.object({
 });
 
 export type Member = z.infer<typeof MemberSchema>;
+
+/////////////////////////////////////////
+// MEMBER RECENT SCHEMA
+/////////////////////////////////////////
+
+export const MemberRecentSchema = z.object({
+  /**
+   * 最近操作类型
+   */
+  action: MemberRecentActionSchema.describe("最近操作类型"),
+  /**
+   * 主键
+   */
+  id: z.number().int().describe("主键"),
+  /**
+   * 是否删除
+   */
+  // omitted: deleted: z.number().int().describe("是否删除"),
+  /**
+   * 创建人 id
+   */
+  createBy: z.number().int().describe("创建人 id"),
+  /**
+   * 修改人 id
+   */
+  updateBy: z.number().int().describe("修改人 id"),
+  /**
+   * 创建时间
+   */
+  createAt: z.coerce.date().describe("创建时间"),
+  /**
+   * 修改时间
+   */
+  updateAt: z.coerce.date().describe("修改时间"),
+  /**
+   * 删除时间
+   */
+  // omitted: deleteAt: z.coerce.date().nullable().describe("删除时间"),
+  /**
+   * 所属会员id
+   */
+  memberId: z.number().int().describe("所属会员id"),
+  /**
+   * 关联会员id
+   */
+  relateMemberId: z.number().int().describe("关联会员id"),
+  /**
+   * 最近联系时间
+   */
+  recent: z.coerce.date().describe("最近联系时间"),
+});
+
+export type MemberRecent = z.infer<typeof MemberRecentSchema>;
 
 /////////////////////////////////////////
 // MEMBER LINKED ACCOUNT SCHEMA
@@ -893,6 +970,10 @@ export const TransactionHistorySchema = z.object({
    */
   tokenContractAddress: z.string().describe("代币合约地址"),
   /**
+   * 代币兑美元价格
+   */
+  tokenPrice: z.string().nullable().describe("代币兑美元价格"),
+  /**
    * 交易金额（代币数量）
    */
   amount: z.number().int().describe("交易金额（代币数量）"),
@@ -1086,6 +1167,10 @@ export const NotificationSchema = z.object({
    */
   id: z.number().int().describe("主键"),
   /**
+   * 是否删除
+   */
+  // omitted: deleted: z.number().int().describe("是否删除"),
+  /**
    * 创建人 id
    */
   createBy: z.number().int().describe("创建人 id"),
@@ -1104,7 +1189,7 @@ export const NotificationSchema = z.object({
   /**
    * 删除时间
    */
-  deleteAt: z.number().int().describe("删除时间"),
+  // omitted: deleteAt: z.coerce.date().nullable().describe("删除时间"),
   /**
    * 通知来源枚举：SYSTEM 系统自动触发；ADMIN 管理后台发送；
    */

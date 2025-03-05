@@ -25,7 +25,14 @@ import * as _ from "radash";
 import { PagedResult, PageUtils } from "../../core/model.js";
 import { TransactionHistorySchema } from "../../../prisma/generated/zod/index.js";
 import { nanoid } from "nanoid";
-import { getAddress } from "viem";
+import { formatUnits, getAddress } from "viem";
+import { Decimal } from "decimal.js";
+import type { OpenExchangeRates } from "../../plugins/open-exchange-rates.js";
+
+export enum TransactionHistorySubject {
+  INCOME = "INCOME",
+  EXPEND = "EXPEND",
+}
 
 @injectable()
 export class TransactionHistoryService {
@@ -39,7 +46,9 @@ export class TransactionHistoryService {
     @inject(Services.BizContractService)
     private readonly bizContractService: BizContractService,
     @inject(Services.NotificationPublishService)
-    private readonly notificationPublicService: NotificationPublishService
+    private readonly notificationPublicService: NotificationPublishService,
+    @inject(Symbols.OpenExchangeRates)
+    private readonly openExchangeRates: OpenExchangeRates
   ) {}
 
   async createTransactionHistory(
@@ -71,6 +80,7 @@ export class TransactionHistoryService {
       network: blockChain.network,
       tokenSymbol: tokenContract.tokenSymbol,
       tokenDecimals: tokenContract.tokenDecimals,
+      tokenPrice: tokenContract.priceValue,
       transactionTime: new Date(),
       transactionStatus: TransactionStatus.ACCEPTED,
       networkFee: 0,
@@ -80,7 +90,8 @@ export class TransactionHistoryService {
     if (
       transactionType == TransactionType.SEND ||
       transactionType == TransactionType.QR_CODE ||
-      transactionType == TransactionType.REQUEST
+      transactionType == TransactionType.REQUEST ||
+      transactionType == TransactionType.REQUEST_LINK
     ) {
       business = BIZ.TRANSFER;
     } else if (transactionType == TransactionType.PAY_LINK) {
@@ -150,9 +161,68 @@ export class TransactionHistoryService {
       data.receiverWalletAddress = receiverWalletAddress;
     }
 
+    if (transactionType == TransactionType.REQUEST) {
+      if (!input.senderMemberId) {
+        throw PARAMETER_ERROR({ message: "please choose a sender" });
+      }
+      const senderMember = await this.memberService.findMember({
+        id: input.senderMemberId,
+      });
+      if (!senderMember) {
+        throw UNEXPECTED({ message: "sender member not exist" });
+      }
+      const senderWalletAddress =
+        await this.memberService.findSmartWalletAddress({
+          did: senderMember.did,
+        });
+      if (!senderWalletAddress || _.isEmpty(senderWalletAddress)) {
+        throw UNEXPECTED({ message: "sender have no smart wallet" });
+      }
+      data.senderMemberId = input.senderMemberId;
+      data.senderDid = senderMember.did;
+      data.senderWalletAddress = senderWalletAddress;
+
+      const receiverMember = await this.memberService.findMember({
+        id: input.memberId,
+      });
+      if (!receiverMember) {
+        throw UNEXPECTED({ message: "receiver member not exist" });
+      }
+      const receiverWalletAddress =
+        await this.memberService.findSmartWalletAddress({
+          did: receiverMember.did,
+        });
+      if (!receiverWalletAddress || _.isEmpty(receiverWalletAddress)) {
+        throw UNEXPECTED({ message: "receiver have no smart wallet" });
+      }
+      data.receiverMemberId = input.memberId;
+      data.receiverDid = receiverMember.did;
+      data.receiverWalletAddress = receiverWalletAddress;
+    }
+
+    if (transactionType == TransactionType.REQUEST_LINK) {
+      const receiverMember = await this.memberService.findMember({
+        id: input.memberId,
+      });
+      if (!receiverMember) {
+        throw UNEXPECTED({ message: "receiver member not exist" });
+      }
+      const receiverWalletAddress =
+        await this.memberService.findSmartWalletAddress({
+          did: receiverMember.did,
+        });
+      if (!receiverWalletAddress || _.isEmpty(receiverWalletAddress)) {
+        throw UNEXPECTED({ message: "receiver have no smart wallet" });
+      }
+      data.receiverMemberId = input.memberId;
+      data.receiverDid = receiverMember.did;
+      data.receiverWalletAddress = receiverWalletAddress;
+    }
+
     if (
       transactionType == TransactionType.REQUEST ||
-      transactionType == TransactionType.PAY_LINK
+      transactionType == TransactionType.PAY_LINK ||
+      transactionType == TransactionType.REQUEST_LINK
     ) {
       data.transactionStatus = TransactionStatus.PENDING;
     }
@@ -175,6 +245,7 @@ export class TransactionHistoryService {
   async updateTransactionHash({
     id,
     transactionHash,
+    memberId,
   }: TransactionHashUpdateInput) {
     const transactionHistory = await this.prisma.transactionHistory.findUnique({
       where: { id },
@@ -190,18 +261,45 @@ export class TransactionHistoryService {
       return;
     }
 
+    let data: Prisma.TransactionHistoryUpdateInput = {
+      transactionHash,
+      transactionStatus:
+        transactionHistory.transactionCategory === TransactionCategory.REQUEST
+          ? TransactionStatus.ACCEPTED
+          : undefined,
+    };
+    if (transactionHistory.transactionType === TransactionType.REQUEST_LINK) {
+      const senderMember = await this.memberService.findMember({
+        id: memberId,
+      });
+      if (!senderMember) {
+        throw UNEXPECTED({ message: "sender member not exist" });
+      }
+      const senderWalletAddress =
+        await this.memberService.findSmartWalletAddress({
+          did: senderMember.did,
+        });
+      if (!senderWalletAddress || _.isEmpty(senderWalletAddress)) {
+        throw UNEXPECTED({ message: "sender have no smart wallet" });
+      }
+      data.senderMemberId = memberId;
+      data.senderDid = senderMember.did;
+      data.senderWalletAddress = senderWalletAddress;
+    }
+
     await this.prisma.transactionHistory.update({
-      data: {
-        transactionHash,
-        transactionStatus:
-          transactionHistory.transactionType === TransactionType.REQUEST
-            ? TransactionStatus.ACCEPTED
-            : undefined,
-      },
+      data,
       where: { id },
     });
 
-    if (transactionHistory.transactionType == TransactionType.REQUEST) {
+    await this.memberService.updateMemberRecent({
+      memberId,
+      trans: transactionHistory,
+    });
+
+    if (
+      transactionHistory.transactionCategory === TransactionCategory.REQUEST
+    ) {
       await this.notificationPublicService.sendTransUpdate({
         trans: (await this.prisma.transactionHistory.findUnique({
           where: { id },
@@ -240,6 +338,7 @@ export class TransactionHistoryService {
   }
 
   async findTransactionHistory({
+    currency,
     id,
   }: TransactionHistoryFindInput): Promise<TransactionHistoryFindOutput> {
     const transactionHistory = await this.prisma.transactionHistory.findUnique({
@@ -247,31 +346,14 @@ export class TransactionHistoryService {
     });
 
     if (transactionHistory) {
-      const memberMap = await this.memberService.mappingMember({
-        ids: _.unique([
-          transactionHistory?.senderMemberId,
-          transactionHistory?.receiverMemberId,
-        ])
-          .filter((x) => x !== null)
-          .map((x) => x as number),
-      });
-
-      (
-        transactionHistory as TransactionHistoryQueryResult["record"][0]
-      ).senderMember = transactionHistory?.senderMemberId
-        ? memberMap.get(transactionHistory.senderMemberId) ?? null
-        : null;
-      (
-        transactionHistory as TransactionHistoryQueryResult["record"][0]
-      ).receiverMember = transactionHistory?.receiverMemberId
-        ? memberMap.get(transactionHistory.receiverMemberId) ?? null
-        : null;
+      await this.fillData([transactionHistory], currency);
     }
 
     return transactionHistory;
   }
 
   async findTransactionHistoryByCode({
+    currency,
     transactionCode,
   }: TransactionHistoryFindByCodeInput): Promise<TransactionHistoryFindOutput> {
     const transactionHistory = await this.prisma.transactionHistory.findUnique({
@@ -279,25 +361,7 @@ export class TransactionHistoryService {
     });
 
     if (transactionHistory) {
-      const memberMap = await this.memberService.mappingMember({
-        ids: _.unique([
-          transactionHistory?.senderMemberId,
-          transactionHistory?.receiverMemberId,
-        ])
-          .filter((x) => x !== null)
-          .map((x) => x as number),
-      });
-
-      (
-        transactionHistory as TransactionHistoryQueryResult["record"][0]
-      ).senderMember = transactionHistory?.senderMemberId
-        ? memberMap.get(transactionHistory.senderMemberId) ?? null
-        : null;
-      (
-        transactionHistory as TransactionHistoryQueryResult["record"][0]
-      ).receiverMember = transactionHistory?.receiverMemberId
-        ? memberMap.get(transactionHistory.receiverMemberId) ?? null
-        : null;
+      await this.fillData([transactionHistory], currency);
     }
 
     return transactionHistory;
@@ -306,8 +370,23 @@ export class TransactionHistoryService {
   async pageTransactionHistory({
     page,
     pageSize: limit,
+    currency,
+    subject,
+    search,
+    memberId,
     ...input
   }: TransactionHistoryQuery): Promise<TransactionHistoryQueryResult> {
+    let memberIds: number[] | undefined;
+    if (search && !_.isEmpty(search)) {
+      const memberList = await this.memberService.searchMember({ search });
+      memberIds = _.unique(
+        memberList.filter((x) => x.id != memberId).map((x) => x.id)
+      );
+      if (_.isEmpty(memberIds)) {
+        return PagedResult.empty({ page, pageSize: limit });
+      }
+    }
+
     const pageResult = await this.prisma.transactionHistory.paginate({
       page,
       limit,
@@ -317,6 +396,30 @@ export class TransactionHistoryService {
           gte: input.transactionTimeFrom,
           lte: input.transactionTimeTo,
         },
+        AND: [
+          {
+            OR: [
+              {
+                senderMemberId:
+                  subject === TransactionHistorySubject.INCOME
+                    ? undefined
+                    : memberId,
+              },
+              {
+                receiverMemberId:
+                  subject === TransactionHistorySubject.EXPEND
+                    ? undefined
+                    : memberId,
+              },
+            ],
+          },
+          {
+            OR: [
+              { senderMemberId: { in: memberIds } },
+              { receiverMemberId: { in: memberIds } },
+            ],
+          },
+        ],
       },
       orderBy: [
         {
@@ -325,7 +428,7 @@ export class TransactionHistoryService {
       ],
     });
 
-    await this.fillData(pageResult.result);
+    await this.fillData(pageResult.result, currency);
 
     return PagedResult.fromPaginationResult(pageResult);
   }
@@ -357,7 +460,10 @@ export class TransactionHistoryService {
     return transactionHistoryList;
   }
 
-  private async fillData(trans: TransactionHistory[]) {
+  private async fillData(
+    trans: TransactionHistory[],
+    currency: string = "USD"
+  ) {
     const senderMemberIds = trans.map((x) => x.senderMemberId);
     const receiverMemberIds = trans.map((x) => x.receiverMemberId);
     const memberMap = await this.memberService.mappingMember({
@@ -366,13 +472,32 @@ export class TransactionHistoryService {
         .map((x) => x as number),
     });
 
+    let rate = 1;
+    if (currency != "USD") {
+      const exchangeRates = await this.openExchangeRates.latest();
+      rate = exchangeRates.rates[currency] ?? 1;
+    }
+
     for (const item of trans) {
-      (item as TransactionHistoryQueryResult["record"][0]).senderMember =
-        item.senderMemberId ? memberMap.get(item.senderMemberId) ?? null : null;
-      (item as TransactionHistoryQueryResult["record"][0]).receiverMember =
-        item.receiverMemberId
-          ? memberMap.get(item.receiverMemberId) ?? null
-          : null;
+      const tokenAmount = item.tokenDecimals
+        ? formatUnits(BigInt(item.amount ?? "0"), item.tokenDecimals)
+        : item.amount ?? "0";
+      let currencyAmount = item.tokenPrice
+        ? new Decimal(tokenAmount)
+            .mul(new Decimal(item.tokenPrice))
+            .mul(rate)
+            .toFixed()
+        : undefined;
+
+      const record = item as TransactionHistoryQueryResult["record"][0];
+      record.senderMember = item.senderMemberId
+        ? memberMap.get(item.senderMemberId) ?? null
+        : null;
+      record.receiverMember = item.receiverMemberId
+        ? memberMap.get(item.receiverMemberId) ?? null
+        : null;
+      record.currency = currency;
+      record.currencyAmount = currencyAmount;
     }
   }
 }
@@ -388,12 +513,17 @@ export const TransactionHistorySchemas = {
       description: "交易分类",
     }),
     transactionType: z.nativeEnum(TransactionType, { description: "交易类型" }),
+    senderMemberId: z.number({ description: "付款人 - 会员id" }).optional(),
     receiverMemberId: z.number({ description: "收款人 - 会员id" }).optional(),
     amount: z.number({ description: "交易金额（代币数量）" }),
     message: z.string({ description: "附带留言" }).optional(),
   }),
   TransactionHistoryQuery: PageUtils.asPageable(
     z.object({
+      currency: z
+        .string({ description: "货币符号：USD/HKD/CNY" })
+        .optional()
+        .default("USD"),
       platform: z
         .nativeEnum(BlockChainPlatform, {
           description: "区块链平台: ETH 以太坊；SOLANA Solana;",
@@ -420,6 +550,12 @@ export const TransactionHistorySchemas = {
         .date({ description: "交易时间 - 开始" })
         .optional(),
       transactionTimeTo: z.date({ description: "交易时间 - 结束" }).optional(),
+      search: z.string({ description: "搜索关键词" }).optional(),
+      subject: z
+        .nativeEnum(TransactionHistorySubject, {
+          description: "交易主题：收入：INCOME; 支出：EXPEND；",
+        })
+        .optional(),
     })
   ),
   TransactionHashUpdateInput: z.object({
@@ -436,11 +572,15 @@ export const TransactionHistorySchemas = {
     transactionCode: z.string({ description: "交易编码" }),
   }),
   TransactionHistoryFindOutput: TransactionHistorySchema.extend({
+    currency: z.string({ description: "货币符号：USD/HKD/CNY" }).optional(),
+    currencyAmount: z.string({ description: "货币余额" }).optional(),
     senderMember: MemberSchemas.MemberOutput.nullish(),
     receiverMember: MemberSchemas.MemberOutput.nullish(),
   }).nullable(),
   TransactionHistoryQueryResult: PageUtils.asPagedResult(
     TransactionHistorySchema.extend({
+      currency: z.string({ description: "货币符号：USD/HKD/CNY" }).optional(),
+      currencyAmount: z.string({ description: "货币余额" }).optional(),
       senderMember: MemberSchemas.MemberOutput.nullish(),
       receiverMember: MemberSchemas.MemberOutput.nullish(),
     })
@@ -452,16 +592,16 @@ export type TransactionHistoryCreateInput = z.infer<
 > & { memberId: number };
 export type TransactionHashUpdateInput = z.infer<
   typeof TransactionHistorySchemas.TransactionHashUpdateInput
->;
+> & { memberId: number };
 export type TransactionHistoryDeclineInput = z.infer<
   typeof TransactionHistorySchemas.TransactionHistoryDeclineInput
 >;
 export type TransactionHistoryFindInput = z.infer<
   typeof TransactionHistorySchemas.TransactionHistoryFindInput
->;
+> & { currency?: string };
 export type TransactionHistoryFindByCodeInput = z.infer<
   typeof TransactionHistorySchemas.TransactionHistoryFindByCodeInput
->;
+> & { currency?: string };
 export type TransactionHistoryFindOutput = z.infer<
   typeof TransactionHistorySchemas.TransactionHistoryFindOutput
 >;

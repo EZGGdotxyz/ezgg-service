@@ -84,6 +84,37 @@ model Member {
   @@map("member")
 }
 
+model MemberRecent {
+  /// 主键
+  id       Int       @id @default(autoincrement()) @db.UnsignedInt
+  /// 是否删除 @zod.custom.omit(["model"])
+  deleted  Int       @default(0) @db.UnsignedInt
+  /// 创建人 id
+  createBy Int       @default(0) @db.UnsignedInt
+  /// 修改人 id
+  updateBy Int       @default(0) @db.UnsignedInt
+  /// 创建时间
+  createAt DateTime  @default(now())
+  /// 修改时间
+  updateAt DateTime  @default(now()) @updatedAt
+  /// 删除时间 @zod.custom.omit(["model"])
+  deleteAt DateTime?
+
+  /// 所属会员id
+  memberId       Int                @default(0) @db.UnsignedInt
+  /// 关联会员id
+  relateMemberId Int                @default(0) @db.UnsignedInt
+  /// 最近操作类型
+  action         MemberRecentAction
+  /// 最近联系时间
+  recent         DateTime           @default(now()) @updatedAt
+}
+
+enum MemberRecentAction {
+  SEND
+  RECEIVE
+}
+
 model MemberLinkedAccount {
   /// 主键
   id       Int       @id @default(autoincrement()) @db.UnsignedInt
@@ -219,7 +250,7 @@ model TokenContract {
   sort Int
 
   /// 代币价格 - 币种
-  priceCurrency   String?   @default("usd") @db.VarChar(8)
+  priceCurrency   String?   @default("USD") @db.VarChar(8)
   /// 代币价格
   priceValue      String?
   /// 代币价格更新时间
@@ -288,6 +319,7 @@ enum TransactionType {
   WITHDRAW
   PAY_LINK
   QR_CODE
+  REQUEST_LINK
 }
 
 /// 交易历史记录
@@ -357,6 +389,8 @@ model TransactionHistory {
   tokenDecimals        Int?               @db.UnsignedInt
   /// 代币合约地址
   tokenContractAddress String             @db.VarChar(255)
+  /// 代币兑美元价格
+  tokenPrice           String?
 
   /// 交易金额（代币数量）
   amount     Int @db.UnsignedInt
@@ -455,17 +489,19 @@ model Setting {
 /// 站内信
 model Notification {
   /// 主键
-  id       Int      @id @default(autoincrement()) @db.UnsignedInt
+  id       Int       @id @default(autoincrement()) @db.UnsignedInt
+  /// 是否删除 @zod.custom.omit(["model"])
+  deleted  Int       @default(0) @db.UnsignedInt
   /// 创建人 id
-  createBy Int      @default(0) @db.UnsignedInt
+  createBy Int       @default(0) @db.UnsignedInt
   /// 修改人 id
-  updateBy Int      @default(0) @db.UnsignedInt
+  updateBy Int       @default(0) @db.UnsignedInt
   /// 创建时间
-  createAt DateTime @default(now())
+  createAt DateTime  @default(now())
   /// 修改时间
-  updateAt DateTime @default(now()) @updatedAt
-  /// 删除时间
-  deleteAt Int      @default(0) @db.UnsignedInt
+  updateAt DateTime  @default(now()) @updatedAt
+  /// 删除时间 @zod.custom.omit(["model"])
+  deleteAt DateTime?
 
   /// 通知来源枚举：SYSTEM 系统自动触发；ADMIN 管理后台发送；
   source       String       @db.VarChar(64)

@@ -124,6 +124,11 @@ export class PayLinkService {
       });
     });
 
+    await this.memberService.updateMemberRecent({
+      memberId,
+      trans: transactionHistory,
+    });
+
     await this.notificationPublicService.sendTransUpdate({
       trans: (await this.prisma.transactionHistory.findUnique({
         where: { id: transactionHistory.id },
