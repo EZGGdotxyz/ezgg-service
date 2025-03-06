@@ -384,7 +384,7 @@ export const MemberSchemas = {
   MemberPageQuery: PageUtils.asPageable(
     z.object({
       search: z.string({ description: "检索条件" }).optional(),
-      recent: z.boolean({ description: "检索最近交易会员" }).optional(),
+      recent: z.coerce.boolean({ description: "检索最近交易会员" }).optional(),
     })
   ),
   MemberPageResult: PageUtils.asPagedResult(

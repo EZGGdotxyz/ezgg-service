@@ -7,7 +7,7 @@ declare module "fastify" {
   interface FastifyInstance {
     maskPhone(phone: string): string;
     handlePhoneMask<T>(
-      adapter: (x: T) => { type: string; search: string; detail: string }[]
+      adapter: (x: T) => { type: string; search: string }[]
     ): preSerializationAsyncHookHandler;
   }
 }
@@ -26,9 +26,7 @@ const plugins: FastifyPluginAsync = async (fastify) => {
 
   fastify.decorate(
     "handlePhoneMask",
-    <T>(
-      adapter: (x: T) => { type: string; search: string; detail: string }[]
-    ) => {
+    <T>(adapter: (x: T) => { type: string; search: string }[]) => {
       return async (request, reply, payload) => {
         const result = payload as ApiResult<T>;
         if (result.code !== "0") {
@@ -43,7 +41,6 @@ const plugins: FastifyPluginAsync = async (fastify) => {
             continue;
           }
           linkedAccount.search = fastify.maskPhone(linkedAccount.search);
-          linkedAccount.detail = "";
         }
         return payload;
       };

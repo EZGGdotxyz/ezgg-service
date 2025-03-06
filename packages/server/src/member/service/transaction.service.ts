@@ -91,7 +91,8 @@ export class TransactionHistoryService {
       transactionType == TransactionType.SEND ||
       transactionType == TransactionType.QR_CODE ||
       transactionType == TransactionType.REQUEST ||
-      transactionType == TransactionType.REQUEST_LINK
+      transactionType == TransactionType.REQUEST_LINK ||
+      transactionType == TransactionType.REQUEST_QR_CODE
     ) {
       business = BIZ.TRANSFER;
     } else if (transactionType == TransactionType.PAY_LINK) {
@@ -116,7 +117,8 @@ export class TransactionHistoryService {
       transactionType == TransactionType.SEND ||
       transactionType == TransactionType.QR_CODE ||
       transactionType == TransactionType.WITHDRAW ||
-      transactionType == TransactionType.PAY_LINK
+      transactionType == TransactionType.PAY_LINK ||
+      transactionType == TransactionType.REQUEST_QR_CODE
     ) {
       const senderMember = await this.memberService.findMember({
         id: input.memberId,
@@ -138,7 +140,8 @@ export class TransactionHistoryService {
 
     if (
       transactionType == TransactionType.SEND ||
-      transactionType == TransactionType.QR_CODE
+      transactionType == TransactionType.QR_CODE ||
+      transactionType == TransactionType.REQUEST_QR_CODE
     ) {
       if (!input.receiverMemberId) {
         throw PARAMETER_ERROR({ message: "please choose a receiver" });

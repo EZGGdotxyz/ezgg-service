@@ -320,6 +320,7 @@ enum TransactionType {
   PAY_LINK
   QR_CODE
   REQUEST_LINK
+  REQUEST_QR_CODE
 }
 
 /// 交易历史记录
