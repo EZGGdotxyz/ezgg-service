@@ -17,7 +17,7 @@ contract SimpleTransfer {
     );
 
     function transfer(address to, IERC20 erc20, uint amount) public {
-        erc20.safeTransfer(to, amount);
+        erc20.safeTransferFrom(msg.sender, to, amount);
 
         emit TransferEvent(
             block.timestamp,

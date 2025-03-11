@@ -204,6 +204,11 @@ model BlockChain {
   /// Alchemy Network 枚举值
   alchemyNetwork String?            @db.VarChar(255)
 
+  /// 原生代币符号
+  tokenSymbol String
+  /// 原生代币价格（美元）
+  tokenPrice  String?
+
   @@unique([platform, chainId])
   @@map("block_chain")
 }
@@ -535,4 +540,64 @@ enum ToMemberRole {
   NONE
   SENDER
   RECEIVER
+}
+
+model TransactionFeeEstimate {
+  /// 主键
+  id       Int       @id @default(autoincrement()) @db.UnsignedInt
+  /// 是否删除 @zod.custom.omit(["model"])
+  deleted  Int       @default(0) @db.UnsignedInt
+  /// 创建人 id
+  createBy Int       @default(0) @db.UnsignedInt
+  /// 修改人 id
+  updateBy Int       @default(0) @db.UnsignedInt
+  /// 创建时间
+  createAt DateTime  @default(now())
+  /// 修改时间
+  updateAt DateTime  @default(now()) @updatedAt
+  /// 删除时间 @zod.custom.omit(["model"])
+  deleteAt DateTime?
+
+  // 交易历史id
+  transactionHistoryId Int    @db.UnsignedInt
+  /// 交易编码
+  transactionCode      String @db.VarChar(64)
+
+  /// 区块链平台
+  platform BlockChainPlatform
+  /// 区块链id
+  chainId  Int
+  /// ETH兑美元价值
+  ethToUsd String
+
+  /// 代币符号
+  tokenSymbol          String
+  /// 代币精度
+  tokenDecimals        Int    @db.UnsignedInt
+  /// 代币合约地址
+  tokenContractAddress String @db.VarChar(255)
+  /// 代币兑美元价格
+  tokenPrice           String
+
+  /// UserOperation打包前，序列化，基础校验消耗的gas
+  preVerificationGas   String @db.VarChar(255)
+  /// UserOperation打包，验证合法性，校验签名消耗的gas
+  verificationGasLimit String @db.VarChar(255)
+  /// UserOperation执行用户操作消耗的gas
+  callGasLimit         String @db.VarChar(255)
+  /// 合计消耗的gas
+  gas                  String @db.VarChar(255)
+  /// gas价格(单位wei)
+  gasPrice             String @db.VarChar(255)
+
+  /// 总费用(单位wei)
+  totalWeiCost   String @db.VarChar(255)
+  /// 总费用(单位eth)
+  totalEthCost   String @db.VarChar(255)
+  /// 总费用(单位usd)
+  totalUsdCost   String @db.VarChar(255)
+  /// 总费用(单位token)
+  totalTokenCost String @db.VarChar(255)
+
+  @@map("transaction_fee_estimate")
 }

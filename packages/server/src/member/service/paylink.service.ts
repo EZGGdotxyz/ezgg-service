@@ -13,7 +13,7 @@ import { MemberService, NotificationPublishService } from "./index.js";
 import { PARAMETER_ERROR } from "../../core/error.js";
 import { nanoid } from "nanoid";
 import * as _ from "radash";
-import { ethers } from "ethers";
+import { keccak256, toHex } from "viem";
 
 @injectable()
 export class PayLinkService {
@@ -129,7 +129,7 @@ export class PayLinkService {
       trans: transactionHistory,
     });
 
-    await this.notificationPublicService.sendTransUpdate({
+    await this.notificationPublicService.sendPayLinkUpdate({
       trans: (await this.prisma.transactionHistory.findUnique({
         where: { id: transactionHistory.id },
       }))!,
@@ -149,7 +149,7 @@ export class PayLinkService {
   }
 
   private hashKeccak256(input: string): string {
-    return ethers.keccak256(ethers.toUtf8Bytes(input));
+    return keccak256(toHex(input));
   }
 }
 

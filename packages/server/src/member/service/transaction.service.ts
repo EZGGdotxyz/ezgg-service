@@ -17,6 +17,7 @@ import {
   MemberSchemas,
   MemberService,
   NotificationPublishService,
+  GasEstimateService,
 } from "./index.js";
 import { Symbols } from "../../identifier.js";
 import { Symbols as Services } from "./identifier.js";
@@ -25,7 +26,7 @@ import * as _ from "radash";
 import { PagedResult, PageUtils } from "../../core/model.js";
 import { TransactionHistorySchema } from "../../../prisma/generated/zod/index.js";
 import { nanoid } from "nanoid";
-import { formatUnits, getAddress } from "viem";
+import { formatUnits, parseUnits, getAddress } from "viem";
 import { Decimal } from "decimal.js";
 import type { OpenExchangeRates } from "../../plugins/open-exchange-rates.js";
 
@@ -48,7 +49,9 @@ export class TransactionHistoryService {
     @inject(Services.NotificationPublishService)
     private readonly notificationPublicService: NotificationPublishService,
     @inject(Symbols.OpenExchangeRates)
-    private readonly openExchangeRates: OpenExchangeRates
+    private readonly openExchangeRates: OpenExchangeRates,
+    @inject(Services.GasEstimateService)
+    private readonly gasEstimateService: GasEstimateService
   ) {}
 
   async createTransactionHistory(
@@ -82,43 +85,30 @@ export class TransactionHistoryService {
       tokenDecimals: tokenContract.tokenDecimals,
       tokenPrice: tokenContract.priceValue,
       transactionTime: new Date(),
-      transactionStatus: TransactionStatus.ACCEPTED,
+      transactionStatus: TransactionStatus.PENDING,
       networkFee: 0,
     };
 
-    let business: BIZ | null = null;
-    if (
-      transactionType == TransactionType.SEND ||
-      transactionType == TransactionType.QR_CODE ||
-      transactionType == TransactionType.REQUEST ||
-      transactionType == TransactionType.REQUEST_LINK ||
-      transactionType == TransactionType.REQUEST_QR_CODE
-    ) {
-      business = BIZ.TRANSFER;
-    } else if (transactionType == TransactionType.PAY_LINK) {
-      business = BIZ.LINK;
-    }
-    if (business) {
-      const contract = await this.bizContractService.findContract({
-        platform,
-        chainId,
-        business,
+    const business =
+      transactionType == TransactionType.PAY_LINK ? BIZ.LINK : BIZ.TRANSFER;
+    const contract = await this.bizContractService.findContract({
+      platform,
+      chainId,
+      business,
+    });
+    if (!contract) {
+      throw PARAMETER_ERROR({
+        message: `Not supported business ${transactionType}`,
       });
-      if (!contract) {
-        throw PARAMETER_ERROR({
-          message: `Not supported business ${transactionType}`,
-        });
-      }
-      data.business = business;
-      data.bizContractAddress = contract.address;
     }
+    data.business = contract.business;
+    data.bizContractAddress = contract.address;
 
     if (
       transactionType == TransactionType.SEND ||
       transactionType == TransactionType.QR_CODE ||
       transactionType == TransactionType.WITHDRAW ||
-      transactionType == TransactionType.PAY_LINK ||
-      transactionType == TransactionType.REQUEST_QR_CODE
+      transactionType == TransactionType.PAY_LINK
     ) {
       const senderMember = await this.memberService.findMember({
         id: input.memberId,
@@ -140,8 +130,7 @@ export class TransactionHistoryService {
 
     if (
       transactionType == TransactionType.SEND ||
-      transactionType == TransactionType.QR_CODE ||
-      transactionType == TransactionType.REQUEST_QR_CODE
+      transactionType == TransactionType.QR_CODE
     ) {
       if (!input.receiverMemberId) {
         throw PARAMETER_ERROR({ message: "please choose a receiver" });
@@ -164,81 +153,76 @@ export class TransactionHistoryService {
       data.receiverWalletAddress = receiverWalletAddress;
     }
 
-    if (transactionType == TransactionType.REQUEST) {
-      if (!input.senderMemberId) {
-        throw PARAMETER_ERROR({ message: "please choose a sender" });
-      }
-      const senderMember = await this.memberService.findMember({
-        id: input.senderMemberId,
-      });
-      if (!senderMember) {
-        throw UNEXPECTED({ message: "sender member not exist" });
-      }
-      const senderWalletAddress =
-        await this.memberService.findSmartWalletAddress({
-          did: senderMember.did,
-        });
-      if (!senderWalletAddress || _.isEmpty(senderWalletAddress)) {
-        throw UNEXPECTED({ message: "sender have no smart wallet" });
-      }
-      data.senderMemberId = input.senderMemberId;
-      data.senderDid = senderMember.did;
-      data.senderWalletAddress = senderWalletAddress;
-
-      const receiverMember = await this.memberService.findMember({
-        id: input.memberId,
-      });
-      if (!receiverMember) {
-        throw UNEXPECTED({ message: "receiver member not exist" });
-      }
-      const receiverWalletAddress =
-        await this.memberService.findSmartWalletAddress({
-          did: receiverMember.did,
-        });
-      if (!receiverWalletAddress || _.isEmpty(receiverWalletAddress)) {
-        throw UNEXPECTED({ message: "receiver have no smart wallet" });
-      }
-      data.receiverMemberId = input.memberId;
-      data.receiverDid = receiverMember.did;
-      data.receiverWalletAddress = receiverWalletAddress;
-    }
-
-    if (transactionType == TransactionType.REQUEST_LINK) {
-      const receiverMember = await this.memberService.findMember({
-        id: input.memberId,
-      });
-      if (!receiverMember) {
-        throw UNEXPECTED({ message: "receiver member not exist" });
-      }
-      const receiverWalletAddress =
-        await this.memberService.findSmartWalletAddress({
-          did: receiverMember.did,
-        });
-      if (!receiverWalletAddress || _.isEmpty(receiverWalletAddress)) {
-        throw UNEXPECTED({ message: "receiver have no smart wallet" });
-      }
-      data.receiverMemberId = input.memberId;
-      data.receiverDid = receiverMember.did;
-      data.receiverWalletAddress = receiverWalletAddress;
-    }
-
     if (
-      transactionType == TransactionType.REQUEST ||
-      transactionType == TransactionType.PAY_LINK ||
-      transactionType == TransactionType.REQUEST_LINK
+      transactionType === TransactionType.REQUEST ||
+      transactionType === TransactionType.REQUEST_LINK ||
+      transactionType === TransactionType.REQUEST_QR_CODE
     ) {
-      data.transactionStatus = TransactionStatus.PENDING;
+      if (transactionType !== TransactionType.REQUEST_LINK) {
+        if (!input.senderMemberId) {
+          throw PARAMETER_ERROR({ message: "please choose a sender" });
+        }
+        const senderMember = await this.memberService.findMember({
+          id: input.senderMemberId,
+        });
+        if (!senderMember) {
+          throw UNEXPECTED({ message: "sender member not exist" });
+        }
+        const senderWalletAddress =
+          await this.memberService.findSmartWalletAddress({
+            did: senderMember.did,
+          });
+        if (!senderWalletAddress || _.isEmpty(senderWalletAddress)) {
+          throw UNEXPECTED({ message: "sender have no smart wallet" });
+        }
+        data.senderMemberId = input.senderMemberId;
+        data.senderDid = senderMember.did;
+        data.senderWalletAddress = senderWalletAddress;
+      }
+
+      const receiverMember = await this.memberService.findMember({
+        id: input.memberId,
+      });
+      if (!receiverMember) {
+        throw UNEXPECTED({ message: "receiver member not exist" });
+      }
+      const receiverWalletAddress =
+        await this.memberService.findSmartWalletAddress({
+          did: receiverMember.did,
+        });
+      if (!receiverWalletAddress || _.isEmpty(receiverWalletAddress)) {
+        throw UNEXPECTED({ message: "receiver have no smart wallet" });
+      }
+      data.receiverMemberId = input.memberId;
+      data.receiverDid = receiverMember.did;
+      data.receiverWalletAddress = receiverWalletAddress;
     }
 
     // TODO 调用合约计算网络费用
 
-    const trans = await this.prisma.transactionHistory.create({
-      data,
+    const trans = await this.prisma.$transaction(async (tx) => {
+      const trans = await tx.transactionHistory.create({
+        data,
+      });
+
+      const estimateNetworkFee =
+        await this.gasEstimateService.estimateNetworkFee({ trans });
+      const transFeeEstimate = await tx.transactionFeeEstimate.create({
+        data: estimateNetworkFee,
+      });
+
+      const { totalTokenCost } = transFeeEstimate;
+      await tx.transactionHistory.update({
+        where: { id: trans.id },
+        data: {
+          networkFee: Number(parseUnits(totalTokenCost, trans.tokenDecimals!)),
+        },
+      });
+
+      return trans;
     });
 
-    if (transactionType == TransactionType.SEND) {
-      await this.notificationPublicService.sendTransSend({ trans });
-    } else if (transactionType == TransactionType.REQUEST) {
+    if (transactionType == TransactionType.REQUEST) {
       await this.notificationPublicService.sendTransRequest({ trans });
     }
 
@@ -266,28 +250,28 @@ export class TransactionHistoryService {
 
     let data: Prisma.TransactionHistoryUpdateInput = {
       transactionHash,
-      transactionStatus:
-        transactionHistory.transactionCategory === TransactionCategory.REQUEST
-          ? TransactionStatus.ACCEPTED
-          : undefined,
     };
-    if (transactionHistory.transactionType === TransactionType.REQUEST_LINK) {
+
+    if (transactionHistory.transactionType !== TransactionType.PAY_LINK) {
+      data.transactionStatus = TransactionStatus.ACCEPTED;
+    }
+
+    if (!transactionHistory.senderMemberId) {
+      data.senderMemberId = memberId;
       const senderMember = await this.memberService.findMember({
         id: memberId,
       });
-      if (!senderMember) {
-        throw UNEXPECTED({ message: "sender member not exist" });
+      if (senderMember) {
+        const senderWalletAddress =
+          await this.memberService.findSmartWalletAddress({
+            did: senderMember.did,
+          });
+        if (!senderWalletAddress || _.isEmpty(senderWalletAddress)) {
+          throw UNEXPECTED({ message: "sender have no smart wallet" });
+        }
+        data.senderDid = senderMember.did;
+        data.senderWalletAddress = senderWalletAddress;
       }
-      const senderWalletAddress =
-        await this.memberService.findSmartWalletAddress({
-          did: senderMember.did,
-        });
-      if (!senderWalletAddress || _.isEmpty(senderWalletAddress)) {
-        throw UNEXPECTED({ message: "sender have no smart wallet" });
-      }
-      data.senderMemberId = memberId;
-      data.senderDid = senderMember.did;
-      data.senderWalletAddress = senderWalletAddress;
     }
 
     await this.prisma.transactionHistory.update({
@@ -300,13 +284,17 @@ export class TransactionHistoryService {
       trans: transactionHistory,
     });
 
-    if (
-      transactionHistory.transactionCategory === TransactionCategory.REQUEST
-    ) {
-      await this.notificationPublicService.sendTransUpdate({
+    if (transactionHistory.transactionCategory == TransactionCategory.REQUEST) {
+      await this.notificationPublicService.sendRequestTransUpdate({
         trans: (await this.prisma.transactionHistory.findUnique({
           where: { id },
         }))!,
+      });
+    } else if (
+      transactionHistory.transactionCategory == TransactionCategory.SEND
+    ) {
+      await this.notificationPublicService.sendTransSend({
+        trans: transactionHistory,
       });
     }
   }
@@ -318,7 +306,9 @@ export class TransactionHistoryService {
     if (!transactionHistory) {
       throw PARAMETER_ERROR({ message: "transaction history not exist" });
     }
-    if (TransactionType.REQUEST !== transactionHistory.transactionType) {
+    if (
+      TransactionCategory.REQUEST !== transactionHistory.transactionCategory
+    ) {
       throw PARAMETER_ERROR({ message: "Not a request transaction" });
     }
     if (TransactionStatus.PENDING !== transactionHistory.transactionStatus) {
@@ -331,13 +321,11 @@ export class TransactionHistoryService {
       where: { id },
     });
 
-    if (transactionHistory.transactionType == TransactionType.REQUEST) {
-      await this.notificationPublicService.sendTransUpdate({
-        trans: (await this.prisma.transactionHistory.findUnique({
-          where: { id },
-        }))!,
-      });
-    }
+    await this.notificationPublicService.sendRequestTransUpdate({
+      trans: (await this.prisma.transactionHistory.findUnique({
+        where: { id },
+      }))!,
+    });
   }
 
   async findTransactionHistory({

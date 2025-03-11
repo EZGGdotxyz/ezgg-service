@@ -26,6 +26,7 @@ async function main() {
         sort: 0,
         alchemyRpc: "https://base-mainnet.g.alchemy.com/v2",
         alchemyNetwork: "base-mainnet",
+        tokenSymbol: "ETH",
       },
       {
         platform: BlockChainPlatform.ETH,
@@ -36,6 +37,7 @@ async function main() {
         sort: 1,
         alchemyRpc: "https://polygon-mainnet.g.alchemy.com/v2",
         alchemyNetwork: "polygon-mainnet",
+        tokenSymbol: "MATIC",
       },
       {
         platform: BlockChainPlatform.ETH,
@@ -46,6 +48,7 @@ async function main() {
         sort: 2,
         alchemyRpc: "https://bnb-mainnet.g.alchemy.com/v2",
         alchemyNetwork: "bnb-mainnet",
+        tokenSymbol: "BNB",
       },
       {
         platform: BlockChainPlatform.ETH,
@@ -56,6 +59,7 @@ async function main() {
         sort: 3,
         alchemyRpc: "https://base-sepolia.g.alchemy.com/v2",
         alchemyNetwork: "base-sepolia",
+        tokenSymbol: "ETH",
       },
       {
         platform: BlockChainPlatform.ETH,
@@ -66,6 +70,7 @@ async function main() {
         sort: 4,
         alchemyRpc: "https://polygon-amoy.g.alchemy.com/v2",
         alchemyNetwork: "polygon-amoy",
+        tokenSymbol: "MATIC",
       },
       {
         platform: BlockChainPlatform.ETH,
@@ -76,6 +81,7 @@ async function main() {
         sort: 5,
         alchemyRpc: "https://bnb-testnet.g.alchemy.com/v2",
         alchemyNetwork: "bnb-testnet",
+        tokenSymbol: "BNB",
       },
     ];
     await prisma.blockChain.createMany({ data });

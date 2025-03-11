@@ -7,6 +7,7 @@ import {
   ToMemberRole,
   TransactionType,
   TransactionStatus,
+  TransactionCategory,
 } from "@prisma/client";
 
 const SOURCE = {
@@ -28,11 +29,14 @@ export class NotificationPublishService {
   ) {}
 
   async sendTransSend({ trans }: { trans: TransactionHistory }) {
+    if (!trans.receiverMemberId) {
+      return;
+    }
     await this.prisma.notification.create({
       data: {
         source: SOURCE.SYSTEM,
         subject: SUBJECT.TRANS_SEND,
-        toMemberId: trans.receiverMemberId!,
+        toMemberId: trans.receiverMemberId,
         toMemberRole: ToMemberRole.RECEIVER,
         status: 0,
         notifyAt: new Date(),
@@ -42,11 +46,14 @@ export class NotificationPublishService {
   }
 
   async sendTransRequest({ trans }: { trans: TransactionHistory }) {
+    if (!trans.senderMemberId) {
+      return;
+    }
     await this.prisma.notification.create({
       data: {
         source: SOURCE.SYSTEM,
         subject: SUBJECT.TRANS_REQUEST,
-        toMemberId: trans.senderMemberId!,
+        toMemberId: trans.senderMemberId,
         toMemberRole: ToMemberRole.SENDER,
         status: 0,
         notifyAt: new Date(),
@@ -55,34 +62,55 @@ export class NotificationPublishService {
     });
   }
 
-  async sendTransUpdate({ trans }: { trans: TransactionHistory }) {
-    if (
-      !(
-        trans.transactionType === TransactionType.REQUEST ||
-        trans.transactionType === TransactionType.PAY_LINK
-      )
-    ) {
+  async sendRequestTransUpdate({ trans }: { trans: TransactionHistory }) {
+    let action: string | null = null;
+    if (trans.transactionStatus === TransactionStatus.ACCEPTED) {
+      action = "REQUEST_ACCEPTED";
+    } else if (trans.transactionStatus === TransactionStatus.DECLINED) {
+      action = "REQUEST_DECLINED";
+    } else {
       return;
     }
 
-    const toMemberId = (
-      trans.transactionType === TransactionType.REQUEST
-        ? trans.receiverMemberId
-        : trans.senderMemberId
-    )!;
-    const toMemberRole =
-      trans.transactionType === TransactionType.REQUEST
-        ? ToMemberRole.RECEIVER
-        : ToMemberRole.SENDER;
+    if (
+      !trans.receiverMemberId ||
+      trans.transactionCategory !== TransactionCategory.REQUEST
+    ) {
+      return;
+    }
+    const toMemberId = trans.receiverMemberId;
+    const toMemberRole = ToMemberRole.RECEIVER;
+
+    await this.prisma.notification.create({
+      data: {
+        source: SOURCE.SYSTEM,
+        subject: SUBJECT.TRANS_UPDATE,
+        action,
+        toMemberId,
+        toMemberRole,
+        status: 0,
+        notifyAt: new Date(),
+        transactionHistoryId: trans.id,
+      },
+    });
+  }
+
+  async sendPayLinkUpdate({ trans }: { trans: TransactionHistory }) {
     let action: string | null = null;
     if (trans.transactionStatus === TransactionStatus.ACCEPTED) {
-      action =
-        trans.transactionType === TransactionType.REQUEST
-          ? "REQUEST_ACCEPTED"
-          : "PAY_LINK_ACCEPTED";
-    } else if (trans.transactionStatus === TransactionStatus.DECLINED) {
-      action = "请求已接受；REQUEST_DECLINED";
+      action = "PAY_LINK_ACCEPTED";
+    } else {
+      return;
     }
+
+    if (
+      !trans.senderMemberId ||
+      trans.transactionType !== TransactionType.PAY_LINK
+    ) {
+      return;
+    }
+    const toMemberId = trans.senderMemberId;
+    const toMemberRole = ToMemberRole.SENDER;
 
     await this.prisma.notification.create({
       data: {

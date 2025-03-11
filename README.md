@@ -12,9 +12,9 @@ pnpm -F @crypto-transfer/eths test
 ```
 cd packages/eths
 # BASE SEPOLIA上部署并验证TokenTransfer.sol
-pnpx hardhat ignition deploy ignition/modules/TokenTransfer.sol.ts --network baseSepolia --verify
+pnpm hardhat ignition deploy ignition/modules/TokenTransfer.sol.ts --network baseSepolia --verify
 # BASE SEPOLIA上部署并验证TokenLink.sol
-pnpx hardhat ignition deploy ignition/modules/TokenLink.sol.ts --network baseSepolia --verify
+pnpm hardhat ignition deploy ignition/modules/TokenLink.sol.ts --network baseSepolia --verify
 ```
 
 ## server

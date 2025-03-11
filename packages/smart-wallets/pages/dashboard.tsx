@@ -223,6 +223,31 @@ export default function DashboardPage() {
     // 转账金额
     const amount = BigInt(amountInUsdc)
 
+    // 获取UserOperation需要消耗的Gas
+    // const estimate = await smartWalletClient.estimateUserOperationGas({
+    //   calls:[
+    //     { // 调用USDC代币的approve方法，授信给转账业务合约
+    //       to: tokenContractAddress,
+    //       data: encodeFunctionData({
+    //         abi: erc20Abi,
+    //         functionName: "approve",
+    //         args: [getAddress(bizContractAddress), amount]
+    //       })
+    //     },
+    //     { // 调用转账业务合约的transfer方法，将代币转给接收方（并收取手续费）
+    //       to: bizContractAddress,
+    //       data: encodeFunctionData({
+    //         abi: TokenTransferContract.abi,
+    //         functionName: "transfer",
+    //         args: [transaction.receiverWalletAddress!, tokenContractAddress, amount]
+    //       })
+    //     }
+    //   ],
+    //   maxFeePerGas: 0n,
+    //   maxPriorityFeePerGas: 0n,
+    // })
+    // console.log(estimate)
+
     // 使用Privy的SmartWallet发起ERC4337标准的批量打包交易，保证代币授权和业务合约调用在同一笔交易中执行，并由payMaster代支付网络费用
     const transactionHash = await smartWalletClient.sendTransaction({
       calls:[

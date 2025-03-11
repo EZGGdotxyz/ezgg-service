@@ -128,7 +128,7 @@ export const NotificationSchemas = {
     })
   ),
   NotificationUpdateStatusInput: z.object({
-    id: z.number({ description: "通知ID" }),
+    id: z.coerce.number({ description: "通知ID" }),
   }),
 };
 

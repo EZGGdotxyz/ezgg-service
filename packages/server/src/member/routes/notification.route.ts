@@ -72,7 +72,6 @@ const route: FastifyPluginAsyncZod = async (fastify) => {
         tags: [TAG],
         summary: "更新所有通知为已读",
         security: [{ authorization: [] }],
-        params: NotificationSchemas.NotificationUpdateStatusInput,
         response: {
           200: ApiUtils.asApiResult(z.void()),
         },

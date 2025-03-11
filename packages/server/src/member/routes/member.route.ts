@@ -127,7 +127,10 @@ const route: FastifyPluginAsyncZod = async (fastify) => {
       ApiUtils.ok(
         await fastify.diContainer
           .get<MemberService>(Symbols.MemberService)
-          .pageMember(request.query)
+          .pageMember({
+            ...request.query,
+            memberId: request.privyUser?.customMetadata.id! as number,
+          })
       )
   );
 };

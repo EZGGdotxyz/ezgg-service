@@ -17,6 +17,7 @@ import type { AlchemyFactory } from "../../plugins/alchemy.js";
 import { Network, TokenPriceBySymbolResult } from "alchemy-sdk";
 import * as _ from "radash";
 import { Address, getAddress } from "viem";
+import { PARAMETER_ERROR } from "../../core/error.js";
 
 function tokenOf(
   address: string
@@ -79,6 +80,56 @@ export class BlockChainService {
         },
       },
     });
+  }
+
+  async getEthValue({
+    platform,
+    chainId,
+  }: {
+    platform: BlockChainPlatform;
+    chainId: number;
+  }): Promise<{ tokenSymbol: string; tokenPrice?: string }> {
+    const blockChain = await this.prisma.blockChain.findUnique({
+      where: {
+        platform_chainId: {
+          platform,
+          chainId,
+        },
+      },
+    });
+    if (!blockChain) {
+      throw PARAMETER_ERROR({ message: `Not supported chain id ${chainId}` });
+    }
+    if (!blockChain.tokenPrice) {
+      const alchemy = await this.alchemy.get(
+        blockChain.alchemyNetwork as Network
+      );
+      const { data } = await alchemy.prices.getTokenPriceBySymbol([
+        blockChain.tokenSymbol,
+      ]);
+      const result =
+        data.filter((x) => x.symbol === blockChain.tokenSymbol)[0] ?? null;
+      const price =
+        result?.prices.filter((x) => x.currency === "usd")[0] ?? null;
+      blockChain.tokenPrice = price?.value ?? null;
+      if (blockChain.tokenPrice) {
+        await this.prisma.blockChain.update({
+          where: {
+            platform_chainId: {
+              platform,
+              chainId,
+            },
+          },
+          data: {
+            tokenPrice: blockChain.tokenPrice,
+          },
+        });
+      }
+    }
+    return {
+      tokenSymbol: blockChain.tokenSymbol,
+      tokenPrice: blockChain.tokenPrice,
+    };
   }
 
   async listTokenContract({
@@ -240,6 +291,7 @@ export const BlockChainSchemas = {
   }),
   BlockChainOutput: BlockChainSchema.omit({
     alchemyRpc: true,
+    tokenPrice: true,
   }),
   TokenContractQuery: z.object({
     platform: z.nativeEnum(BlockChainPlatform, {

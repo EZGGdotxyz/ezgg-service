@@ -1,0 +1,303 @@
+import { Prisma, TransactionHistory, TransactionType } from "@prisma/client";
+import type { AlchemyFactory } from "../../plugins/alchemy.js";
+import { Alchemy, BigNumber, Network, Utils } from "alchemy-sdk";
+import type { ExtendPrismaClient as PrismaClient } from "../../plugins/prisma.js";
+import { PARAMETER_ERROR } from "../../core/error.js";
+import { Symbols } from "../../identifier.js";
+import { Symbols as Services } from "./identifier.js";
+import { inject, injectable } from "inversify";
+import { BlockChainService } from "./index.js";
+import { nanoid } from "nanoid";
+import { Decimal } from "decimal.js";
+import TokenTransferContractAbi from "../../abi/TokenTransfer.json" assert { type: "json" };
+import TokenLinkContractAbi from "../../abi/TokenLink.json" assert { type: "json" };
+import {
+  Address,
+  encodeFunctionData,
+  erc20Abi,
+  getAddress,
+  keccak256,
+  toHex,
+} from "viem";
+import SimpleAccountAbi from "@account-abstraction/contracts/artifacts/SimpleAccount.json" assert { type: "json" };
+import type { FastifyInstance } from "fastify";
+import { ViemClient } from "../../plugins/viem-client.js";
+
+@injectable()
+export class GasEstimateService {
+  constructor(
+    @inject(Symbols.PrismaClient)
+    private readonly prisma: PrismaClient,
+    @inject(Services.BlockChainService)
+    private readonly blockChainService: BlockChainService,
+    @inject(Symbols.AlchemyFactory)
+    private readonly alchemyFactory: AlchemyFactory,
+    @inject(Symbols.Fastify)
+    private readonly fastify: FastifyInstance
+  ) {}
+
+  async estimateNetworkFee({
+    trans,
+  }: {
+    trans: TransactionHistory;
+  }): Promise<Prisma.TransactionFeeEstimateCreateManyInput> {
+    const alchemy = await this.getAlchemy({ trans });
+    const client = await this.fastify.viem.client(trans.chainId);
+
+    const ethValue = await this.blockChainService.getEthValue({
+      platform: trans.platform,
+      chainId: trans.chainId,
+    });
+
+    const simpleAccountHandler = new SimpleAccountHandler(client);
+    const ops = {
+      erc20: new UserOperation.Erc20(trans.tokenContractAddress),
+      tokenTransfer: new UserOperation.TokenTransfer(trans.bizContractAddress!),
+      tokenLink: new UserOperation.TokenLink(trans.bizContractAddress!),
+    };
+    const calls = [ops.erc20.approve(trans.bizContractAddress!, trans.amount)];
+    if (trans.transactionType !== TransactionType.PAY_LINK) {
+      calls.push(
+        ops.tokenTransfer.transfer(
+          trans.receiverWalletAddress!,
+          trans.tokenContractAddress!,
+          trans.amount
+        )
+      );
+    } else {
+      calls.push(
+        ops.tokenLink.deposit(
+          trans.tokenContractAddress!,
+          trans.amount,
+          hashKeccak256(nanoid(64))
+        ),
+        ops.tokenLink.withdraw(trans.senderWalletAddress!, nanoid(64))
+      );
+    }
+
+    const { preVerificationGas, verificationGasLimit, callGasLimit } =
+      await simpleAccountHandler.estimateUserOperationGas({
+        sender: getAddress(trans.senderWalletAddress!),
+        calls,
+      });
+    const gasPrice = await alchemy.core.getGasPrice();
+
+    return compute({
+      preVerificationGas,
+      verificationGasLimit,
+      callGasLimit,
+      gasPrice,
+      trans,
+      ethToUsd: ethValue.tokenPrice!,
+    });
+  }
+
+  private async getAlchemy({
+    trans: { platform, chainId },
+  }: {
+    trans: TransactionHistory;
+  }): Promise<Alchemy> {
+    const blockChain = await this.prisma.blockChain.findUnique({
+      where: { platform_chainId: { platform, chainId } },
+    });
+    if (!blockChain) {
+      throw PARAMETER_ERROR({ message: "block chain not found" });
+    }
+    return this.alchemyFactory.get(blockChain.alchemyNetwork as Network);
+  }
+}
+
+function hashKeccak256(input: string): string {
+  return keccak256(toHex(input));
+}
+
+function compute({
+  preVerificationGas,
+  verificationGasLimit,
+  callGasLimit,
+  gasPrice,
+  trans,
+  ethToUsd,
+}: {
+  preVerificationGas: `0x${string}`;
+  verificationGasLimit: `0x${string}`;
+  callGasLimit: `0x${string}`;
+  gasPrice: BigNumber;
+  trans: TransactionHistory;
+  ethToUsd: string;
+}): Prisma.TransactionFeeEstimateCreateManyInput {
+  const BN = {
+    preVerificationGas: BigNumber.from(preVerificationGas),
+    verificationGasLimit: BigNumber.from(verificationGasLimit),
+    callGasLimit: BigNumber.from(callGasLimit),
+  };
+
+  const gas = BN.preVerificationGas
+    .add(BN.verificationGasLimit)
+    .add(BN.callGasLimit);
+  const totalWeiCost = gas.mul(gasPrice);
+  const totalEthCost = new Decimal(Utils.formatUnits(totalWeiCost, "ether"));
+  const totalUsdCost = totalEthCost.mul(new Decimal(ethToUsd));
+  const totalTokenCost = totalUsdCost.div(new Decimal(trans.tokenPrice!));
+
+  const cost = {
+    totalWeiCost: totalWeiCost.toString(),
+    totalEthCost: totalEthCost.toFixed(),
+    totalUsdCost: totalUsdCost.toFixed(),
+    totalTokenCost: totalTokenCost.toFixed(trans.tokenDecimals!),
+  };
+
+  return {
+    transactionHistoryId: trans.id,
+    transactionCode: trans.transactionCode,
+    platform: trans.platform,
+    chainId: trans.chainId,
+    tokenSymbol: trans.tokenSymbol!,
+    tokenDecimals: trans.tokenDecimals!,
+    tokenContractAddress: trans.tokenContractAddress!,
+    tokenPrice: trans.tokenPrice!,
+    ethToUsd: ethToUsd,
+    preVerificationGas: BN.preVerificationGas.toString(),
+    verificationGasLimit: BN.verificationGasLimit.toString(),
+    callGasLimit: BN.callGasLimit.toString(),
+    gas: gas.toString(),
+    gasPrice: gasPrice.toString(),
+    ...cost,
+  };
+}
+
+namespace UserOperation {
+  export interface Op {
+    address: Address;
+    value?: bigint;
+    callData: `0x${string}`;
+  }
+  export class Erc20 {
+    constructor(private readonly contractAddress: string) {}
+    approve(spenderAddress: string, amount: number): Op {
+      return {
+        address: getAddress(this.contractAddress),
+        value: 0n,
+        callData: encodeFunctionData({
+          abi: erc20Abi,
+          functionName: "approve",
+          args: [getAddress(spenderAddress), BigInt(amount)],
+        }),
+      };
+    }
+  }
+
+  export class TokenTransfer {
+    constructor(private readonly contractAddress: string) {}
+    transfer(
+      receiverWalletAddress: string,
+      tokenContractAddress: string,
+      amount: number
+    ): Op {
+      return {
+        address: getAddress(this.contractAddress),
+        value: 0n,
+        callData: encodeFunctionData({
+          abi: TokenTransferContractAbi.abi,
+          functionName: "transfer",
+          args: [
+            getAddress(receiverWalletAddress),
+            getAddress(tokenContractAddress),
+            BigInt(amount),
+          ],
+        }),
+      };
+    }
+  }
+
+  export class TokenLink {
+    constructor(private readonly contractAddress: string) {}
+    deposit(tokenContractAddress: string, amount: number, otp: string): Op {
+      return {
+        address: getAddress(this.contractAddress),
+        value: 0n,
+        callData: encodeFunctionData({
+          abi: TokenLinkContractAbi.abi,
+          functionName: "deposit",
+          args: [getAddress(tokenContractAddress), BigInt(amount), otp],
+        }),
+      };
+    }
+
+    withdraw(receiverWalletAddress: string, otp: string): Op {
+      return {
+        address: getAddress(this.contractAddress),
+        value: 0n,
+        callData: encodeFunctionData({
+          abi: TokenLinkContractAbi.abi,
+          functionName: "withdraw",
+          args: [getAddress(receiverWalletAddress), otp],
+        }),
+      };
+    }
+  }
+
+  export class SimpleAccount {
+    execute(op: Op) {
+      return {
+        address: `0x0`,
+        value: 0n,
+        callData: encodeFunctionData({
+          abi: SimpleAccountAbi.abi,
+          functionName: "execute",
+          args: [op.address, op.value, op.callData],
+        }),
+      };
+    }
+
+    executeBatch(ops: Op[]) {
+      return {
+        address: `0x0`,
+        value: 0n,
+        callData: encodeFunctionData({
+          abi: SimpleAccountAbi.abi,
+          functionName: "executeBatch",
+          args: [
+            ops.map((op) => op.address),
+            ops.map((op) => op.value),
+            ops.map((op) => op.callData),
+          ],
+        }),
+      };
+    }
+  }
+}
+
+class SimpleAccountHandler {
+  private readonly simpleAccount = new UserOperation.SimpleAccount();
+  constructor(private readonly client: ViemClient) {}
+  async estimateUserOperationGas({
+    sender,
+    calls,
+  }: {
+    sender: Address;
+    calls: UserOperation.Op[];
+  }) {
+    const { callData } = this.simpleAccount.executeBatch(calls);
+    return await this.client.request({
+      method: "eth_estimateUserOperationGas",
+      params: [
+        {
+          sender,
+          callData,
+          nonce: "0x0",
+          initCode: "0x",
+          callGasLimit: "0x0",
+          verificationGasLimit: "0x0",
+          preVerificationGas: "0x0",
+          maxFeePerGas: "0x0",
+          maxPriorityFeePerGas: "0x0",
+          paymasterAndData: "0x",
+          signature:
+            "0xfffffffffffffffffffffffffffffff0000000000000000000000000000000007aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1c",
+        },
+        "0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789",
+      ],
+    });
+  }
+}

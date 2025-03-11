@@ -12,9 +12,11 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@account-abstraction/contracts": "^0.7.0",
     "@nomicfoundation/hardhat-ignition": "^0.15.9",
     "@nomicfoundation/hardhat-toolbox-viem": "^3.0.0",
-    "@types/chai": "^5.0.1",
+
+    "axios": "^1.7.9",
     "css-loader": "^6.5.1",
     "ethers": "^6.13.5",
     "hardhat": "^2.22.18",
@@ -29,7 +31,6 @@
     "webpack": "^5.65.0"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "^5.2.0",
-    "remove": "^0.1.5"
+    "@openzeppelin/contracts": "^5.2.0"
   }
 }

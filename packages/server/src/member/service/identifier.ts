@@ -9,4 +9,5 @@ export const Symbols = {
   SettingService: Symbol.for("SettingService"),
   BalanceService: Symbol.for("BalanceService"),
   FileService: Symbol.for("FileService"),
+  GasEstimateService: Symbol.for("GasEstimateService"),
 };

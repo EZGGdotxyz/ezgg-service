@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "server:dev": "pnpm -F @crypto-transfer/server dev",
-    "server:deploy": "pnpm shipit --shipitfile deployment/crypto-transfer-server/shipitfile.cjs production all"
+    "server:deploy": "pnpm shipit --shipitfile deployment/crypto-transfer-server/shipitfile.cjs all",
+    "server:deploy:pro": "pnpm shipit --shipitfile deployment/crypto-transfer-server/shipitfile.cjs production all"
   },
   "keywords": [],
   "author": "",

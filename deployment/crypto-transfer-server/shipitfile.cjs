@@ -14,10 +14,13 @@ module.exports = (shipit) => {
   const remotePath = "/app/srv/crypto-transfer-server";
 
   shipit.initConfig({
-    default: {},
-    production: {
+    default: {
       key: "./deployment/keys/snapx_pro_rsa",
       servers: "app@ec2-18-142-44-209.ap-southeast-1.compute.amazonaws.com",
+    },
+    production: {
+      key: "./deployment/keys/id_rsa_egzz_app",
+      servers: "app@8.218.197.222",
     },
     // Other environments (staging, etc.)
   });
