@@ -42,6 +42,7 @@ function tokenOf(
     priceAutoUpdate: false,
     show: true,
     sort: 0,
+    feeSupport: false,
   };
 }
 
@@ -235,6 +236,11 @@ export class BlockChainService {
           data.priceValue = price?.value;
           data.priceUpdateAt = price?.lastUpdatedAt;
         }
+
+        if (!data.tokenDecimals || !data.priceValue) {
+          data.feeSupport = false;
+        }
+
         tokenContractList.push(
           await this.prisma.tokenContract.create({ data })
         );

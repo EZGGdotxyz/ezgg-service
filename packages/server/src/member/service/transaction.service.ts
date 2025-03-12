@@ -24,11 +24,15 @@ import { Symbols as Services } from "./identifier.js";
 import { PARAMETER_ERROR, UNEXPECTED } from "../../core/error.js";
 import * as _ from "radash";
 import { PagedResult, PageUtils } from "../../core/model.js";
-import { TransactionHistorySchema } from "../../../prisma/generated/zod/index.js";
+import {
+  TransactionFeeEstimateSchema,
+  TransactionHistorySchema,
+} from "../../../prisma/generated/zod/index.js";
 import { nanoid } from "nanoid";
-import { formatUnits, parseUnits, getAddress } from "viem";
+import { formatUnits, getAddress } from "viem";
 import { Decimal } from "decimal.js";
 import type { OpenExchangeRates } from "../../plugins/open-exchange-rates.js";
+import { send } from "process";
 
 export enum TransactionHistorySubject {
   INCOME = "INCOME",
@@ -84,9 +88,9 @@ export class TransactionHistoryService {
       tokenSymbol: tokenContract.tokenSymbol,
       tokenDecimals: tokenContract.tokenDecimals,
       tokenPrice: tokenContract.priceValue,
+      tokenFeeSupport: tokenContract.feeSupport,
       transactionTime: new Date(),
       transactionStatus: TransactionStatus.PENDING,
-      networkFee: 0,
     };
 
     const business =
@@ -156,7 +160,8 @@ export class TransactionHistoryService {
     if (
       transactionType === TransactionType.REQUEST ||
       transactionType === TransactionType.REQUEST_LINK ||
-      transactionType === TransactionType.REQUEST_QR_CODE
+      transactionType === TransactionType.REQUEST_QR_CODE ||
+      transactionType === TransactionType.DEPOSIT
     ) {
       if (transactionType !== TransactionType.REQUEST_LINK) {
         if (!input.senderMemberId) {
@@ -198,28 +203,16 @@ export class TransactionHistoryService {
       data.receiverWalletAddress = receiverWalletAddress;
     }
 
-    // TODO 调用合约计算网络费用
+    if (transactionType == TransactionType.DEPOSIT) {
+      data.senderWalletAddress = input.senderWalletAddress;
+    }
 
-    const trans = await this.prisma.$transaction(async (tx) => {
-      const trans = await tx.transactionHistory.create({
-        data,
-      });
+    if (transactionType == TransactionType.WITHDRAW) {
+      data.receiverWalletAddress = input.receiverWalletAddress;
+    }
 
-      const estimateNetworkFee =
-        await this.gasEstimateService.estimateNetworkFee({ trans });
-      const transFeeEstimate = await tx.transactionFeeEstimate.create({
-        data: estimateNetworkFee,
-      });
-
-      const { totalTokenCost } = transFeeEstimate;
-      await tx.transactionHistory.update({
-        where: { id: trans.id },
-        data: {
-          networkFee: Number(parseUnits(totalTokenCost, trans.tokenDecimals!)),
-        },
-      });
-
-      return trans;
+    const trans = await this.prisma.transactionHistory.create({
+      data,
     });
 
     if (transactionType == TransactionType.REQUEST) {
@@ -227,6 +220,49 @@ export class TransactionHistoryService {
     }
 
     return trans.id;
+  }
+
+  async updateNetworkFee({
+    transactionCode,
+    tokenContractAddress,
+  }: NetworkFeeUpdateInput): Promise<NetworkFeeUpdateOutput> {
+    const trans = await this.prisma.transactionHistory.findUnique({
+      where: { transactionCode },
+    });
+    if (!trans) {
+      throw PARAMETER_ERROR({ message: "transaction history not exist" });
+    }
+    if (trans.transactionStatus !== TransactionStatus.PENDING) {
+      throw PARAMETER_ERROR({ message: "transaction status not pending" });
+    }
+    const token = await this.blockChainService.findTokenContract({
+      platform: trans.platform,
+      chainId: trans.chainId,
+      address: getAddress(tokenContractAddress),
+    });
+    if (!token.feeSupport) {
+      throw PARAMETER_ERROR({ message: "token not support for pay fee" });
+    }
+    const estimateNetworkFee = await this.gasEstimateService.estimateNetworkFee(
+      { trans, token }
+    );
+
+    return this.prisma.$transaction(async (tx) => {
+      const existed = await this.prisma.transactionFeeEstimate.findUnique({
+        where: { transactionCode: transactionCode },
+      });
+
+      if (existed) {
+        return await tx.transactionFeeEstimate.update({
+          where: { transactionCode: transactionCode },
+          data: estimateNetworkFee,
+        });
+      } else {
+        return await tx.transactionFeeEstimate.create({
+          data: estimateNetworkFee,
+        });
+      }
+    });
   }
 
   async updateTransactionHash({
@@ -479,6 +515,17 @@ export class TransactionHistoryService {
       rate = exchangeRates.rates[currency] ?? 1;
     }
 
+    const ids = trans.map((x) => x.id);
+    const transactionFeeList =
+      await this.prisma.transactionFeeEstimate.findMany({
+        where: {
+          transactionHistoryId: {
+            in: ids,
+          },
+        },
+      });
+    const transactionFeeMap = new Map(transactionFeeList.map((x) => [x.id, x]));
+
     for (const item of trans) {
       const tokenAmount = item.tokenDecimals
         ? formatUnits(BigInt(item.amount ?? "0"), item.tokenDecimals)
@@ -499,6 +546,7 @@ export class TransactionHistoryService {
         : null;
       record.currency = currency;
       record.currencyAmount = currencyAmount;
+      record.networkFee = transactionFeeMap.get(item.id);
     }
   }
 }
@@ -518,7 +566,16 @@ export const TransactionHistorySchemas = {
     receiverMemberId: z.number({ description: "收款人 - 会员id" }).optional(),
     amount: z.number({ description: "交易金额（代币数量）" }),
     message: z.string({ description: "附带留言" }).optional(),
+    senderWalletAddress: z.string({ description: "付款人钱包地址" }).optional(),
+    receiverWalletAddress: z
+      .string({ description: "收款人钱包地址" })
+      .optional(),
   }),
+  NetworkFeeUpdateInput: z.object({
+    transactionCode: z.string({ description: "交易码" }),
+    tokenContractAddress: z.string({ description: "代币地址" }),
+  }),
+  NetworkFeeUpdateOutput: TransactionFeeEstimateSchema,
   TransactionHistoryQuery: PageUtils.asPageable(
     z.object({
       currency: z
@@ -557,6 +614,12 @@ export const TransactionHistorySchemas = {
           description: "交易主题：收入：INCOME; 支出：EXPEND；",
         })
         .optional(),
+      transactionStatus: z
+        .nativeEnum(TransactionStatus, {
+          description:
+            "交易状态：PENDING 待支付；ACCEPTED 已支付；DECLINED 已拒绝；",
+        })
+        .optional(),
     })
   ),
   TransactionHashUpdateInput: z.object({
@@ -584,6 +647,7 @@ export const TransactionHistorySchemas = {
       currencyAmount: z.string({ description: "货币余额" }).optional(),
       senderMember: MemberSchemas.MemberOutput.nullish(),
       receiverMember: MemberSchemas.MemberOutput.nullish(),
+      networkFee: TransactionFeeEstimateSchema.nullish(),
     })
   ),
 };
@@ -591,6 +655,12 @@ export const TransactionHistorySchemas = {
 export type TransactionHistoryCreateInput = z.infer<
   typeof TransactionHistorySchemas.TransactionHistoryCreateInput
 > & { memberId: number };
+export type NetworkFeeUpdateInput = z.infer<
+  typeof TransactionHistorySchemas.NetworkFeeUpdateInput
+>;
+export type NetworkFeeUpdateOutput = z.infer<
+  typeof TransactionHistorySchemas.NetworkFeeUpdateOutput
+>;
 export type TransactionHashUpdateInput = z.infer<
   typeof TransactionHistorySchemas.TransactionHashUpdateInput
 > & { memberId: number };

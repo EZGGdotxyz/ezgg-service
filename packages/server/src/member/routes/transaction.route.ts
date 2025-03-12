@@ -49,6 +49,30 @@ const route: FastifyPluginAsyncZod = async (fastify) => {
   );
 
   fastify.post(
+    "/update-network-fee",
+    {
+      schema: {
+        tags: [TAG],
+        summary: "更新交易手续费",
+        security: [{ authorization: [] }],
+        body: TransactionHistorySchemas.NetworkFeeUpdateInput,
+        response: {
+          200: ApiUtils.asApiResult(
+            TransactionHistorySchemas.NetworkFeeUpdateOutput
+          ),
+        },
+      },
+      onRequest: [fastify.privyAuth],
+    },
+    async (request) =>
+      ApiUtils.ok(
+        await fastify.diContainer
+          .get<TransactionHistoryService>(Symbols.TransactionHistoryService)
+          .updateNetworkFee(request.body)
+      )
+  );
+
+  fastify.post(
     "/update-transaction-hash",
     {
       schema: {

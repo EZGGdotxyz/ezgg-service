@@ -55,9 +55,16 @@ export class BalanceService {
       address: getAddress(address),
     });
 
+    const tokenBalance = _.isEmpty(tokenBalances)
+      ? "0"
+      : tokenBalances[0].tokenBalance;
+    const inWallet = _.isEmpty(tokenBalances)
+      ? false
+      : tokenBalances[0].contractAddress === address;
+
     const [tokenAmount, currencyAmount] = await this.formatAmount({
       currency,
-      tokenBalance: tokenBalances[0].tokenBalance,
+      tokenBalance,
       token,
     });
 
@@ -66,11 +73,13 @@ export class BalanceService {
       currencyAmount,
       token,
       tokenAmount,
+      inWallet,
     };
   }
 
   async listBalance(query: BalanceQuery): Promise<BalanceOutput> {
-    const { platform, chainId, currency, smartWalletAddress } = query;
+    const { platform, chainId, currency, smartWalletAddress, feeSupport } =
+      query;
     const blockChain = await this.blockChainService.findBlockChain({
       platform,
       chainId,
@@ -99,7 +108,7 @@ export class BalanceService {
     let totalBalance = new Decimal(0);
     const tokens: BalanceOutput["tokens"] = [];
     for (const { contractAddress, tokenBalance } of tokenBalances) {
-      const token = tokenMap.get(getAddress(contractAddress));
+      const token = tokenMap.get(getAddress(contractAddress))!;
       const [tokenAmount, currencyAmount] = await this.formatAmount({
         currency,
         tokenBalance,
@@ -115,16 +124,43 @@ export class BalanceService {
         currencyAmount,
         token,
         tokenAmount,
+        inWallet: true,
       });
     }
 
-    return {
-      summary: {
+    const tokenAddressSet = new Set(tokens.map((x) => x.token.address));
+    let allTokenList = await this.blockChainService.listTokenContract({
+      platform,
+      chainId,
+    });
+    allTokenList = allTokenList.filter((x) => !tokenAddressSet.has(x.address));
+    for (const token of allTokenList) {
+      tokens.push({
         currency,
-        balance: totalBalance.toFixed(),
-      },
-      tokens,
-    };
+        currencyAmount: "0",
+        token,
+        tokenAmount: "0",
+        inWallet: false,
+      });
+    }
+
+    if (feeSupport) {
+      return {
+        summary: {
+          currency,
+          balance: totalBalance.toFixed(),
+        },
+        tokens: tokens.filter((x) => x.token.feeSupport),
+      };
+    } else {
+      return {
+        summary: {
+          currency,
+          balance: totalBalance.toFixed(),
+        },
+        tokens,
+      };
+    }
   }
 
   private async formatAmount({
@@ -158,8 +194,9 @@ export class BalanceService {
 const BalanceTokenSchema = z.object({
   currency: z.string({ description: "货币符号：USD/HKD/CNY" }),
   currencyAmount: z.string({ description: "货币余额" }).optional(),
-  token: TokenContractSchema.optional(),
+  token: TokenContractSchema,
   tokenAmount: z.string({ description: "代币数量" }),
+  inWallet: z.boolean({ description: "是否在钱包中" }),
 });
 
 export const BalanceSchemas = {
@@ -180,6 +217,7 @@ export const BalanceSchemas = {
       .string({ description: "货币符号：USD/HKD/CNY" })
       .optional()
       .default("USD"),
+    feeSupport: z.boolean({ description: "是否支持手续费" }).optional(),
   }),
   BalanceOutput: z.object({
     summary: z.object({

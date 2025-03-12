@@ -1,4 +1,4 @@
-import { Prisma, TransactionHistory, TransactionType } from "@prisma/client";
+import { Prisma, TokenContract, TransactionHistory, TransactionType } from "@prisma/client";
 import type { AlchemyFactory } from "../../plugins/alchemy.js";
 import { Alchemy, BigNumber, Network, Utils } from "alchemy-sdk";
 import type { ExtendPrismaClient as PrismaClient } from "../../plugins/prisma.js";
@@ -9,8 +9,6 @@ import { inject, injectable } from "inversify";
 import { BlockChainService } from "./index.js";
 import { nanoid } from "nanoid";
 import { Decimal } from "decimal.js";
-import TokenTransferContractAbi from "../../abi/TokenTransfer.json" assert { type: "json" };
-import TokenLinkContractAbi from "../../abi/TokenLink.json" assert { type: "json" };
 import {
   Address,
   encodeFunctionData,
@@ -18,10 +16,13 @@ import {
   getAddress,
   keccak256,
   toHex,
+  parseUnits,
 } from "viem";
-import SimpleAccountAbi from "@account-abstraction/contracts/artifacts/SimpleAccount.json" assert { type: "json" };
 import type { FastifyInstance } from "fastify";
 import { ViemClient } from "../../plugins/viem-client.js";
+import TokenTransferContractAbi from "../../abi/TokenTransfer.json" with { type: "json" };
+import TokenLinkContractAbi from "../../abi/TokenLink.json" with { type: "json" };
+import SimpleAccountAbi from "@account-abstraction/contracts/artifacts/SimpleAccount.json" with { type: "json" };
 
 @injectable()
 export class GasEstimateService {
@@ -38,8 +39,10 @@ export class GasEstimateService {
 
   async estimateNetworkFee({
     trans,
+    token
   }: {
     trans: TransactionHistory;
+    token: TokenContract;
   }): Promise<Prisma.TransactionFeeEstimateCreateManyInput> {
     const alchemy = await this.getAlchemy({ trans });
     const client = await this.fastify.viem.client(trans.chainId);
@@ -88,7 +91,9 @@ export class GasEstimateService {
       callGasLimit,
       gasPrice,
       trans,
+      token,
       ethToUsd: ethValue.tokenPrice!,
+      platformFee: this.fastify.config.PLATFORM_FEE,
     });
   }
 
@@ -117,14 +122,18 @@ function compute({
   callGasLimit,
   gasPrice,
   trans,
+  token,
   ethToUsd,
+  platformFee
 }: {
   preVerificationGas: `0x${string}`;
   verificationGasLimit: `0x${string}`;
   callGasLimit: `0x${string}`;
   gasPrice: BigNumber;
   trans: TransactionHistory;
+  token: TokenContract;
   ethToUsd: string;
+  platformFee: string;
 }): Prisma.TransactionFeeEstimateCreateManyInput {
   const BN = {
     preVerificationGas: BigNumber.from(preVerificationGas),
@@ -138,13 +147,15 @@ function compute({
   const totalWeiCost = gas.mul(gasPrice);
   const totalEthCost = new Decimal(Utils.formatUnits(totalWeiCost, "ether"));
   const totalUsdCost = totalEthCost.mul(new Decimal(ethToUsd));
-  const totalTokenCost = totalUsdCost.div(new Decimal(trans.tokenPrice!));
+  const platformFeeUsd = new Decimal(platformFee);
+  const totalTokenCost = totalUsdCost.plus(platformFeeUsd).div(new Decimal(token.priceValue!));
 
   const cost = {
     totalWeiCost: totalWeiCost.toString(),
     totalEthCost: totalEthCost.toFixed(),
     totalUsdCost: totalUsdCost.toFixed(),
-    totalTokenCost: totalTokenCost.toFixed(trans.tokenDecimals!),
+    platformFee,
+    totalTokenCost: parseUnits(totalTokenCost.toFixed(token.tokenDecimals!),token.tokenDecimals!).toString(),
   };
 
   return {
@@ -152,17 +163,17 @@ function compute({
     transactionCode: trans.transactionCode,
     platform: trans.platform,
     chainId: trans.chainId,
-    tokenSymbol: trans.tokenSymbol!,
-    tokenDecimals: trans.tokenDecimals!,
-    tokenContractAddress: trans.tokenContractAddress!,
-    tokenPrice: trans.tokenPrice!,
+    tokenSymbol: token.tokenSymbol!,
+    tokenDecimals: token.tokenDecimals!,
+    tokenContractAddress: token.address,
+    tokenPrice: token.priceValue!,
     ethToUsd: ethToUsd,
     preVerificationGas: BN.preVerificationGas.toString(),
     verificationGasLimit: BN.verificationGasLimit.toString(),
     callGasLimit: BN.callGasLimit.toString(),
     gas: gas.toString(),
     gasPrice: gasPrice.toString(),
-    ...cost,
+    ...cost
   };
 }
 

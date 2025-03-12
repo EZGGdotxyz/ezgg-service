@@ -263,6 +263,9 @@ model TokenContract {
   /// 代币价格自动更新标识
   priceAutoUpdate Boolean   @default(false) @db.UnsignedTinyInt
 
+  /// 是否支持支付手续费
+  feeSupport Boolean @default(true) @db.UnsignedTinyInt
+
   @@unique([platform, chainId, address])
   @@map("token_contract")
 }
@@ -397,11 +400,11 @@ model TransactionHistory {
   tokenContractAddress String             @db.VarChar(255)
   /// 代币兑美元价格
   tokenPrice           String?
+  /// 代币是否支持支付网络费用
+  tokenFeeSupport      Boolean            @default(true) @db.UnsignedTinyInt
 
   /// 交易金额（代币数量）
-  amount     Int @db.UnsignedInt
-  /// 网络费用（代币数量）
-  networkFee Int @db.UnsignedInt
+  amount Int @db.UnsignedInt
 
   /// 附带留言
   message String? @db.VarChar(255)
@@ -559,9 +562,9 @@ model TransactionFeeEstimate {
   deleteAt DateTime?
 
   // 交易历史id
-  transactionHistoryId Int    @db.UnsignedInt
+  transactionHistoryId Int    @unique @db.UnsignedInt
   /// 交易编码
-  transactionCode      String @db.VarChar(64)
+  transactionCode      String @unique @db.VarChar(64)
 
   /// 区块链平台
   platform BlockChainPlatform
@@ -596,7 +599,9 @@ model TransactionFeeEstimate {
   totalEthCost   String @db.VarChar(255)
   /// 总费用(单位usd)
   totalUsdCost   String @db.VarChar(255)
-  /// 总费用(单位token)
+  /// 平台费用(单位usd)
+  platformFee    String @db.VarChar(255)
+  /// 最终费用(单位token)
   totalTokenCost String @db.VarChar(255)
 
   @@map("transaction_fee_estimate")
