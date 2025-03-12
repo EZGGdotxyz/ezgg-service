@@ -378,40 +378,50 @@ export class TransactionHistoryService {
       }
     }
 
+    const where: Prisma.TransactionHistoryWhereInput = {
+      ...input,
+      transactionTime: {
+        gte: input.transactionTimeFrom,
+        lte: input.transactionTimeTo,
+      },
+      AND: [
+        {
+          OR: [
+            {
+              senderMemberId:
+                subject === TransactionHistorySubject.INCOME
+                  ? undefined
+                  : memberId,
+            },
+            {
+              receiverMemberId:
+                subject === TransactionHistorySubject.EXPEND
+                  ? undefined
+                  : memberId,
+            },
+          ],
+        },
+        {
+          OR: [
+            { senderMemberId: { in: memberIds } },
+            { receiverMemberId: { in: memberIds } },
+          ],
+        },
+      ],
+    };
+
+    if (subject) {
+      where.transactionCategory = {
+        not: {
+          in: [TransactionCategory.DEPOSIT, TransactionCategory.WITHDRAW],
+        },
+      };
+    }
+
     const pageResult = await this.prisma.transactionHistory.paginate({
       page,
       limit,
-      where: {
-        ...input,
-        transactionTime: {
-          gte: input.transactionTimeFrom,
-          lte: input.transactionTimeTo,
-        },
-        AND: [
-          {
-            OR: [
-              {
-                senderMemberId:
-                  subject === TransactionHistorySubject.INCOME
-                    ? undefined
-                    : memberId,
-              },
-              {
-                receiverMemberId:
-                  subject === TransactionHistorySubject.EXPEND
-                    ? undefined
-                    : memberId,
-              },
-            ],
-          },
-          {
-            OR: [
-              { senderMemberId: { in: memberIds } },
-              { receiverMemberId: { in: memberIds } },
-            ],
-          },
-        ],
-      },
+      where,
       orderBy: [
         {
           createAt: "desc",
