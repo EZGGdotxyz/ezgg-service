@@ -136,6 +136,36 @@ export class PayLinkService {
     });
   }
 
+  async cancelPayLink({
+    transactionCode,
+    memberId,
+  }: PlayLinkCancelInput): Promise<void> {
+    const member = await this.memberService.findMember({ id: memberId });
+    if (!member) {
+      throw PARAMETER_ERROR({ message: "member not exist" });
+    }
+    const transactionHistory = await this.prisma.transactionHistory.findUnique({
+      where: { transactionCode, memberId },
+    });
+    if (!transactionHistory) {
+      throw PARAMETER_ERROR({ message: "transaction history not exist" });
+    }
+    if (TransactionType.PAY_LINK !== transactionHistory.transactionType) {
+      throw PARAMETER_ERROR({ message: "Not a pay link transaction" });
+    }
+    if (TransactionStatus.PENDING !== transactionHistory.transactionStatus) {
+      throw PARAMETER_ERROR({ message: "pay link had accepted" });
+    }
+    await this.prisma.transactionHistory.update({
+      data: {
+        transactionStatus: TransactionStatus.DECLINED,
+      },
+      where: {
+        id: transactionHistory.id,
+      },
+    });
+  }
+
   async findPayLink({
     transactionCode,
   }: FindPayLinkInput): Promise<PlayLinkOutput> {
@@ -164,6 +194,9 @@ export const PlayLinkSchemas = {
     transactionCode: z.string({ description: "交易编号" }),
     transactionHash: z.string({ description: "交易哈希" }),
   }),
+  PlayLinkCancelInput: z.object({
+    transactionCode: z.string({ description: "交易编号" }),
+  }),
   PlayLinkOutput: z.object({
     transactionCode: z.string({ description: "交易编号" }),
     platform: z.nativeEnum(BlockChainPlatform, {
@@ -183,5 +216,8 @@ export type PlayLinkCreateInput = z.infer<
 export type FindPayLinkInput = z.infer<typeof PlayLinkSchemas.FindPayLinkInput>;
 export type PlayLinkTransactionHashUpdateInput = z.infer<
   typeof PlayLinkSchemas.PlayLinkTransactionHashUpdateInput
+> & { memberId: number };
+export type PlayLinkCancelInput = z.infer<
+  typeof PlayLinkSchemas.PlayLinkCancelInput
 > & { memberId: number };
 export type PlayLinkOutput = z.infer<typeof PlayLinkSchemas.PlayLinkOutput>;

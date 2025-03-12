@@ -58,6 +58,31 @@ const route: FastifyPluginAsyncZod = async (fastify) => {
   );
 
   fastify.post(
+    "/cancel-pay-link",
+    {
+      schema: {
+        tags: [TAG],
+        summary: "PayLink拥有人取消PlayLink",
+        security: [{ authorization: [] }],
+        body: PlayLinkSchemas.PlayLinkCancelInput,
+        response: {
+          200: ApiUtils.asApiResult(z.void()),
+        },
+      },
+      onRequest: [fastify.privyAuth],
+    },
+    async (request) =>
+      ApiUtils.ok(
+        await fastify.diContainer
+          .get<PayLinkService>(Symbols.PayLinkService)
+          .cancelPayLink({
+            ...request.body,
+            memberId: request.privyUser?.customMetadata.id! as number,
+          })
+      )
+  );
+
+  fastify.post(
     "/find-pay-link",
     {
       schema: {

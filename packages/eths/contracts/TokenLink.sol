@@ -27,6 +27,15 @@ contract TokenLink is Ownable, TokenPayable, FeeRequired, ReentrancyGuard {
         uint amount
     );
 
+    event LinkCancel(
+        string indexed txCode,
+        uint256 time,
+        address from,
+        address to,
+        address erc20,
+        uint amount
+    );
+
     event LinkRevoke(
         string indexed txCode,
         uint256 time,
@@ -138,6 +147,37 @@ contract TokenLink is Ownable, TokenPayable, FeeRequired, ReentrancyGuard {
         _transfer(msg.sender, payRecord.erc20, payRecord.amount);
 
         // 金额已提取，删除存款记录
+        delete ownerPayRecord[otpHash];
+
+        emit LinkWithdraw(
+            txCode,
+            block.timestamp,
+            address(this),
+            msg.sender,
+            address(payRecord.erc20),
+            payRecord.amount
+        );
+    }
+
+    function cancel(
+        string calldata txCode,
+        string calldata otp
+    ) public nonReentrant {
+        bytes32 otpHash = keccak256(abi.encodePacked(otp));
+        mapping(bytes32 => PayRecord) storage ownerPayRecord = payRecordMap[
+            msg.sender
+        ];
+        PayRecord storage payRecord = ownerPayRecord[otpHash];
+
+        // 输入密码keccak256哈希后找不到存款记录，表明密码错误
+        if (address(payRecord.erc20) == address(0)) {
+            revert OtpIncorrect();
+        }
+
+        // 从存款记录获取预存代币，从当前合约转账对应代币给预存款人
+        _transfer(msg.sender, payRecord.erc20, payRecord.amount);
+
+        // 金额已返还，删除存款记录
         delete ownerPayRecord[otpHash];
 
         emit LinkWithdraw(
