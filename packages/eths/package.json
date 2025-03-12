@@ -15,7 +15,6 @@
     "@account-abstraction/contracts": "^0.7.0",
     "@nomicfoundation/hardhat-ignition": "^0.15.9",
     "@nomicfoundation/hardhat-toolbox-viem": "^3.0.0",
-
     "axios": "^1.7.9",
     "css-loader": "^6.5.1",
     "ethers": "^6.13.5",

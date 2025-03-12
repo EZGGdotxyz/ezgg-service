@@ -1,100 +1,425 @@
-import { z } from 'zod';
-import type { Prisma } from '@prisma/client';
+import { z } from "zod";
 
 /////////////////////////////////////////
 // HELPER FUNCTIONS
 /////////////////////////////////////////
 
-
 /////////////////////////////////////////
 // ENUMS
 /////////////////////////////////////////
 
-export const TransactionIsolationLevelSchema = z.enum(['ReadUncommitted','ReadCommitted','RepeatableRead','Serializable']);
+export const TransactionIsolationLevelSchema = z.enum([
+  "ReadUncommitted",
+  "ReadCommitted",
+  "RepeatableRead",
+  "Serializable",
+]);
 
-export const SysUserScalarFieldEnumSchema = z.enum(['id','deleted','createBy','updateBy','createAt','updateAt','deleteAt','name','username','password','phone','mail','remark','enabled']);
+export const SysUserScalarFieldEnumSchema = z.enum([
+  "id",
+  "deleted",
+  "createBy",
+  "updateBy",
+  "createAt",
+  "updateAt",
+  "deleteAt",
+  "name",
+  "username",
+  "password",
+  "phone",
+  "mail",
+  "remark",
+  "enabled",
+]);
 
-export const MemberScalarFieldEnumSchema = z.enum(['id','deleted','createBy','updateBy','createAt','updateAt','deleteAt','did','createdAt','nickname','avatar']);
+export const MemberScalarFieldEnumSchema = z.enum([
+  "id",
+  "deleted",
+  "createBy",
+  "updateBy",
+  "createAt",
+  "updateAt",
+  "deleteAt",
+  "did",
+  "createdAt",
+  "nickname",
+  "avatar",
+]);
 
-export const MemberRecentScalarFieldEnumSchema = z.enum(['id','deleted','createBy','updateBy','createAt','updateAt','deleteAt','memberId','relateMemberId','action','recent']);
+export const MemberRecentScalarFieldEnumSchema = z.enum([
+  "id",
+  "deleted",
+  "createBy",
+  "updateBy",
+  "createAt",
+  "updateAt",
+  "deleteAt",
+  "memberId",
+  "relateMemberId",
+  "action",
+  "recent",
+]);
 
-export const MemberLinkedAccountScalarFieldEnumSchema = z.enum(['id','deleted','createBy','updateBy','createAt','updateAt','deleteAt','memberId','did','type','detail','search']);
+export const MemberLinkedAccountScalarFieldEnumSchema = z.enum([
+  "id",
+  "deleted",
+  "createBy",
+  "updateBy",
+  "createAt",
+  "updateAt",
+  "deleteAt",
+  "memberId",
+  "did",
+  "type",
+  "detail",
+  "search",
+]);
 
-export const BlockChainScalarFieldEnumSchema = z.enum(['id','deleted','createBy','updateBy','createAt','updateAt','deleteAt','platform','chainId','network','name','show','sort','alchemyRpc','alchemyNetwork','tokenSymbol','tokenPrice']);
+export const BlockChainScalarFieldEnumSchema = z.enum([
+  "id",
+  "deleted",
+  "createBy",
+  "updateBy",
+  "createAt",
+  "updateAt",
+  "deleteAt",
+  "platform",
+  "chainId",
+  "network",
+  "name",
+  "show",
+  "sort",
+  "alchemyRpc",
+  "alchemyNetwork",
+  "tokenSymbol",
+  "tokenPrice",
+]);
 
-export const TokenContractScalarFieldEnumSchema = z.enum(['id','deleted','createBy','updateBy','createAt','updateAt','deleteAt','address','platform','chainId','network','erc','tokenName','tokenSymbol','tokenDecimals','logo','show','sort','priceCurrency','priceValue','priceUpdateAt','priceAutoUpdate']);
+export const TokenContractScalarFieldEnumSchema = z.enum([
+  "id",
+  "deleted",
+  "createBy",
+  "updateBy",
+  "createAt",
+  "updateAt",
+  "deleteAt",
+  "address",
+  "platform",
+  "chainId",
+  "network",
+  "erc",
+  "tokenName",
+  "tokenSymbol",
+  "tokenDecimals",
+  "logo",
+  "show",
+  "sort",
+  "priceCurrency",
+  "priceValue",
+  "priceUpdateAt",
+  "priceAutoUpdate",
+]);
 
-export const BizContractScalarFieldEnumSchema = z.enum(['id','deleted','createBy','updateBy','createAt','updateAt','deleteAt','address','platform','chainId','network','business','enabled','ver']);
+export const BizContractScalarFieldEnumSchema = z.enum([
+  "id",
+  "deleted",
+  "createBy",
+  "updateBy",
+  "createAt",
+  "updateAt",
+  "deleteAt",
+  "address",
+  "platform",
+  "chainId",
+  "network",
+  "business",
+  "enabled",
+  "ver",
+]);
 
-export const TransactionHistoryScalarFieldEnumSchema = z.enum(['id','deleted','createBy','updateBy','createAt','updateAt','deleteAt','memberId','transactionCode','transactionCategory','transactionType','business','bizContractAddress','senderMemberId','senderDid','senderWalletAddress','receiverMemberId','receiverDid','receiverWalletAddress','transactionStatus','transactionTime','transactionConfirmAt','transactionHash','platform','chainId','network','tokenSymbol','tokenDecimals','tokenContractAddress','tokenPrice','amount','networkFee','message']);
+export const TransactionHistoryScalarFieldEnumSchema = z.enum([
+  "id",
+  "deleted",
+  "createBy",
+  "updateBy",
+  "createAt",
+  "updateAt",
+  "deleteAt",
+  "memberId",
+  "transactionCode",
+  "transactionCategory",
+  "transactionType",
+  "business",
+  "bizContractAddress",
+  "senderMemberId",
+  "senderDid",
+  "senderWalletAddress",
+  "receiverMemberId",
+  "receiverDid",
+  "receiverWalletAddress",
+  "transactionStatus",
+  "transactionTime",
+  "transactionConfirmAt",
+  "transactionHash",
+  "platform",
+  "chainId",
+  "network",
+  "tokenSymbol",
+  "tokenDecimals",
+  "tokenContractAddress",
+  "tokenPrice",
+  "amount",
+  "networkFee",
+  "message",
+]);
 
-export const PayLinkScalarFieldEnumSchema = z.enum(['id','deleted','createBy','updateBy','createAt','updateAt','deleteAt','transactionHistoryId','transactionCode','platform','chainId','network','tokenContractAddress','senderWalletAddress','bizContractAddress','otp','transactionHash']);
+export const PayLinkScalarFieldEnumSchema = z.enum([
+  "id",
+  "deleted",
+  "createBy",
+  "updateBy",
+  "createAt",
+  "updateAt",
+  "deleteAt",
+  "transactionHistoryId",
+  "transactionCode",
+  "platform",
+  "chainId",
+  "network",
+  "tokenContractAddress",
+  "senderWalletAddress",
+  "bizContractAddress",
+  "otp",
+  "transactionHash",
+]);
 
-export const SettingScalarFieldEnumSchema = z.enum(['id','deleted','createBy','updateBy','createAt','updateAt','deleteAt','memberId','notifyTransUpdate','notifyAbnormalAlarm','notifyPayRequest','notifyCardActivity','notifyCustomerSupport','notifyBalanceAlarm','notifySecureAlarm','notifySummary','sysAppUpdate','sysSalesPromotion','sysSurvey']);
+export const SettingScalarFieldEnumSchema = z.enum([
+  "id",
+  "deleted",
+  "createBy",
+  "updateBy",
+  "createAt",
+  "updateAt",
+  "deleteAt",
+  "memberId",
+  "notifyTransUpdate",
+  "notifyAbnormalAlarm",
+  "notifyPayRequest",
+  "notifyCardActivity",
+  "notifyCustomerSupport",
+  "notifyBalanceAlarm",
+  "notifySecureAlarm",
+  "notifySummary",
+  "sysAppUpdate",
+  "sysSalesPromotion",
+  "sysSurvey",
+]);
 
-export const NotificationScalarFieldEnumSchema = z.enum(['id','deleted','createBy','updateBy','createAt','updateAt','deleteAt','source','subject','action','title','context','toMemberId','toMemberRole','status','notifyAt','readAt','transactionHistoryId']);
+export const NotificationScalarFieldEnumSchema = z.enum([
+  "id",
+  "deleted",
+  "createBy",
+  "updateBy",
+  "createAt",
+  "updateAt",
+  "deleteAt",
+  "source",
+  "subject",
+  "action",
+  "title",
+  "context",
+  "toMemberId",
+  "toMemberRole",
+  "status",
+  "notifyAt",
+  "readAt",
+  "transactionHistoryId",
+]);
 
-export const TransactionFeeEstimateScalarFieldEnumSchema = z.enum(['id','deleted','createBy','updateBy','createAt','updateAt','deleteAt','transactionHistoryId','transactionCode','platform','chainId','ethToUsd','tokenSymbol','tokenDecimals','tokenContractAddress','tokenPrice','preVerificationGas','verificationGasLimit','callGasLimit','gas','gasPrice','totalWeiCost','totalEthCost','totalUsdCost','totalTokenCost']);
+export const TransactionFeeEstimateScalarFieldEnumSchema = z.enum([
+  "id",
+  "deleted",
+  "createBy",
+  "updateBy",
+  "createAt",
+  "updateAt",
+  "deleteAt",
+  "transactionHistoryId",
+  "transactionCode",
+  "platform",
+  "chainId",
+  "ethToUsd",
+  "tokenSymbol",
+  "tokenDecimals",
+  "tokenContractAddress",
+  "tokenPrice",
+  "preVerificationGas",
+  "verificationGasLimit",
+  "callGasLimit",
+  "gas",
+  "gasPrice",
+  "totalWeiCost",
+  "totalEthCost",
+  "totalUsdCost",
+  "totalTokenCost",
+]);
 
-export const SortOrderSchema = z.enum(['asc','desc']);
+export const SortOrderSchema = z.enum(["asc", "desc"]);
 
-export const NullsOrderSchema = z.enum(['first','last']);
+export const NullsOrderSchema = z.enum(["first", "last"]);
 
-export const SysUserOrderByRelevanceFieldEnumSchema = z.enum(['name','username','password','phone','mail','remark']);
+export const SysUserOrderByRelevanceFieldEnumSchema = z.enum([
+  "name",
+  "username",
+  "password",
+  "phone",
+  "mail",
+  "remark",
+]);
 
-export const MemberOrderByRelevanceFieldEnumSchema = z.enum(['did','nickname','avatar']);
+export const MemberOrderByRelevanceFieldEnumSchema = z.enum([
+  "did",
+  "nickname",
+  "avatar",
+]);
 
-export const MemberLinkedAccountOrderByRelevanceFieldEnumSchema = z.enum(['did','type','detail','search']);
+export const MemberLinkedAccountOrderByRelevanceFieldEnumSchema = z.enum([
+  "did",
+  "type",
+  "detail",
+  "search",
+]);
 
-export const BlockChainOrderByRelevanceFieldEnumSchema = z.enum(['name','alchemyRpc','alchemyNetwork','tokenSymbol','tokenPrice']);
+export const BlockChainOrderByRelevanceFieldEnumSchema = z.enum([
+  "name",
+  "alchemyRpc",
+  "alchemyNetwork",
+  "tokenSymbol",
+  "tokenPrice",
+]);
 
-export const TokenContractOrderByRelevanceFieldEnumSchema = z.enum(['address','tokenName','tokenSymbol','logo','priceCurrency','priceValue']);
+export const TokenContractOrderByRelevanceFieldEnumSchema = z.enum([
+  "address",
+  "tokenName",
+  "tokenSymbol",
+  "logo",
+  "priceCurrency",
+  "priceValue",
+]);
 
-export const BizContractOrderByRelevanceFieldEnumSchema = z.enum(['address']);
+export const BizContractOrderByRelevanceFieldEnumSchema = z.enum(["address"]);
 
-export const TransactionHistoryOrderByRelevanceFieldEnumSchema = z.enum(['transactionCode','bizContractAddress','senderDid','senderWalletAddress','receiverDid','receiverWalletAddress','transactionHash','tokenSymbol','tokenContractAddress','tokenPrice','message']);
+export const TransactionHistoryOrderByRelevanceFieldEnumSchema = z.enum([
+  "transactionCode",
+  "bizContractAddress",
+  "senderDid",
+  "senderWalletAddress",
+  "receiverDid",
+  "receiverWalletAddress",
+  "transactionHash",
+  "tokenSymbol",
+  "tokenContractAddress",
+  "tokenPrice",
+  "message",
+]);
 
-export const PayLinkOrderByRelevanceFieldEnumSchema = z.enum(['transactionCode','tokenContractAddress','senderWalletAddress','bizContractAddress','otp','transactionHash']);
+export const PayLinkOrderByRelevanceFieldEnumSchema = z.enum([
+  "transactionCode",
+  "tokenContractAddress",
+  "senderWalletAddress",
+  "bizContractAddress",
+  "otp",
+  "transactionHash",
+]);
 
-export const NotificationOrderByRelevanceFieldEnumSchema = z.enum(['source','subject','action','title','context']);
+export const NotificationOrderByRelevanceFieldEnumSchema = z.enum([
+  "source",
+  "subject",
+  "action",
+  "title",
+  "context",
+]);
 
-export const TransactionFeeEstimateOrderByRelevanceFieldEnumSchema = z.enum(['transactionCode','ethToUsd','tokenSymbol','tokenContractAddress','tokenPrice','preVerificationGas','verificationGasLimit','callGasLimit','gas','gasPrice','totalWeiCost','totalEthCost','totalUsdCost','totalTokenCost']);
+export const TransactionFeeEstimateOrderByRelevanceFieldEnumSchema = z.enum([
+  "transactionCode",
+  "ethToUsd",
+  "tokenSymbol",
+  "tokenContractAddress",
+  "tokenPrice",
+  "preVerificationGas",
+  "verificationGasLimit",
+  "callGasLimit",
+  "gas",
+  "gasPrice",
+  "totalWeiCost",
+  "totalEthCost",
+  "totalUsdCost",
+  "totalTokenCost",
+]);
 
-export const MemberRecentActionSchema = z.enum(['SEND','RECEIVE']);
+export const MemberRecentActionSchema = z.enum(["SEND", "RECEIVE"]);
 
-export type MemberRecentActionType = `${z.infer<typeof MemberRecentActionSchema>}`
+export type MemberRecentActionType = `${z.infer<
+  typeof MemberRecentActionSchema
+>}`;
 
-export const BlockChainPlatformSchema = z.enum(['ETH','SOLANA']);
+export const BlockChainPlatformSchema = z.enum(["ETH", "SOLANA"]);
 
-export type BlockChainPlatformType = `${z.infer<typeof BlockChainPlatformSchema>}`
+export type BlockChainPlatformType = `${z.infer<
+  typeof BlockChainPlatformSchema
+>}`;
 
-export const BlockChainNetworkSchema = z.enum(['MAIN','TEST','DEV']);
+export const BlockChainNetworkSchema = z.enum(["MAIN", "TEST", "DEV"]);
 
-export type BlockChainNetworkType = `${z.infer<typeof BlockChainNetworkSchema>}`
+export type BlockChainNetworkType = `${z.infer<
+  typeof BlockChainNetworkSchema
+>}`;
 
-export const ERCSchema = z.enum(['ERC20']);
+export const ERCSchema = z.enum(["ERC20"]);
 
-export type ERCType = `${z.infer<typeof ERCSchema>}`
+export type ERCType = `${z.infer<typeof ERCSchema>}`;
 
-export const BIZSchema = z.enum(['LINK','VAULT','TRANSFER']);
+export const BIZSchema = z.enum(["LINK", "VAULT", "TRANSFER"]);
 
-export type BIZType = `${z.infer<typeof BIZSchema>}`
+export type BIZType = `${z.infer<typeof BIZSchema>}`;
 
-export const TransactionStatusSchema = z.enum(['PENDING','ACCEPTED','DECLINED']);
+export const TransactionStatusSchema = z.enum([
+  "PENDING",
+  "ACCEPTED",
+  "DECLINED",
+]);
 
-export type TransactionStatusType = `${z.infer<typeof TransactionStatusSchema>}`
+export type TransactionStatusType = `${z.infer<
+  typeof TransactionStatusSchema
+>}`;
 
-export const TransactionCategorySchema = z.enum(['SEND','REQUEST','DEPOSIT','WITHDRAW']);
+export const TransactionCategorySchema = z.enum([
+  "SEND",
+  "REQUEST",
+  "DEPOSIT",
+  "WITHDRAW",
+]);
 
-export type TransactionCategoryType = `${z.infer<typeof TransactionCategorySchema>}`
+export type TransactionCategoryType = `${z.infer<
+  typeof TransactionCategorySchema
+>}`;
 
-export const TransactionTypeSchema = z.enum(['SEND','REQUEST','DEPOSIT','WITHDRAW','PAY_LINK','QR_CODE','REQUEST_LINK','REQUEST_QR_CODE']);
+export const TransactionTypeSchema = z.enum([
+  "SEND",
+  "REQUEST",
+  "DEPOSIT",
+  "WITHDRAW",
+  "PAY_LINK",
+  "QR_CODE",
+  "REQUEST_LINK",
+  "REQUEST_QR_CODE",
+]);
 
-export type TransactionTypeType = `${z.infer<typeof TransactionTypeSchema>}`
+export type TransactionTypeType = `${z.infer<typeof TransactionTypeSchema>}`;
 
-export const ToMemberRoleSchema = z.enum(['NONE','SENDER','RECEIVER']);
+export const ToMemberRoleSchema = z.enum(["NONE", "SENDER", "RECEIVER"]);
 
-export type ToMemberRoleType = `${z.infer<typeof ToMemberRoleSchema>}`
+export type ToMemberRoleType = `${z.infer<typeof ToMemberRoleSchema>}`;
 
 /////////////////////////////////////////
 // MODELS
@@ -161,9 +486,9 @@ export const SysUserSchema = z.object({
    * 停用/启用标识；false 停用；true 启用
    */
   enabled: z.boolean().describe("停用/启用标识；false 停用；true 启用"),
-})
+});
 
-export type SysUser = z.infer<typeof SysUserSchema>
+export type SysUser = z.infer<typeof SysUserSchema>;
 
 /////////////////////////////////////////
 // MEMBER SCHEMA
@@ -214,9 +539,9 @@ export const MemberSchema = z.object({
    * 头像地址
    */
   avatar: z.string().nullable().describe("头像地址"),
-})
+});
 
-export type Member = z.infer<typeof MemberSchema>
+export type Member = z.infer<typeof MemberSchema>;
 
 /////////////////////////////////////////
 // MEMBER RECENT SCHEMA
@@ -267,9 +592,9 @@ export const MemberRecentSchema = z.object({
    * 最近联系时间
    */
   recent: z.coerce.date().describe("最近联系时间"),
-})
+});
 
-export type MemberRecent = z.infer<typeof MemberRecentSchema>
+export type MemberRecent = z.infer<typeof MemberRecentSchema>;
 
 /////////////////////////////////////////
 // MEMBER LINKED ACCOUNT SCHEMA
@@ -324,9 +649,9 @@ export const MemberLinkedAccountSchema = z.object({
    * 从detail提取的用于检索的字段
    */
   search: z.string().describe("从detail提取的用于检索的字段"),
-})
+});
 
-export type MemberLinkedAccount = z.infer<typeof MemberLinkedAccountSchema>
+export type MemberLinkedAccount = z.infer<typeof MemberLinkedAccountSchema>;
 
 /////////////////////////////////////////
 // BLOCK CHAIN SCHEMA
@@ -404,9 +729,9 @@ export const BlockChainSchema = z.object({
    * 原生代币价格（美元）
    */
   tokenPrice: z.string().nullable().describe("原生代币价格（美元）"),
-})
+});
 
-export type BlockChain = z.infer<typeof BlockChainSchema>
+export type BlockChain = z.infer<typeof BlockChainSchema>;
 
 /////////////////////////////////////////
 // TOKEN CONTRACT SCHEMA
@@ -504,9 +829,9 @@ export const TokenContractSchema = z.object({
    * 代币价格自动更新标识
    */
   priceAutoUpdate: z.boolean().describe("代币价格自动更新标识"),
-})
+});
 
-export type TokenContract = z.infer<typeof TokenContractSchema>
+export type TokenContract = z.infer<typeof TokenContractSchema>;
 
 /////////////////////////////////////////
 // BIZ CONTRACT SCHEMA
@@ -572,9 +897,9 @@ export const BizContractSchema = z.object({
    * 合约版本
    */
   ver: z.number().int().describe("合约版本"),
-})
+});
 
-export type BizContract = z.infer<typeof BizContractSchema>
+export type BizContract = z.infer<typeof BizContractSchema>;
 
 /////////////////////////////////////////
 // TRANSACTION HISTORY SCHEMA
@@ -599,7 +924,9 @@ export const TransactionHistorySchema = z.object({
   /**
    * 交易状态：PENDING 待支付；ACCEPTED 已支付；DECLINED 已拒绝；
    */
-  transactionStatus: TransactionStatusSchema.describe("交易状态：PENDING 待支付；ACCEPTED 已支付；DECLINED 已拒绝；"),
+  transactionStatus: TransactionStatusSchema.describe(
+    "交易状态：PENDING 待支付；ACCEPTED 已支付；DECLINED 已拒绝；"
+  ),
   /**
    * 区块链平台
    */
@@ -716,9 +1043,9 @@ export const TransactionHistorySchema = z.object({
    * 附带留言
    */
   message: z.string().nullable().describe("附带留言"),
-})
+});
 
-export type TransactionHistory = z.infer<typeof TransactionHistorySchema>
+export type TransactionHistory = z.infer<typeof TransactionHistorySchema>;
 
 /////////////////////////////////////////
 // PAY LINK SCHEMA
@@ -790,9 +1117,9 @@ export const PayLinkSchema = z.object({
    * 交易哈希
    */
   transactionHash: z.string().nullable().describe("交易哈希"),
-})
+});
 
-export type PayLink = z.infer<typeof PayLinkSchema>
+export type PayLink = z.infer<typeof PayLinkSchema>;
 
 /////////////////////////////////////////
 // SETTING SCHEMA
@@ -875,9 +1202,9 @@ export const SettingSchema = z.object({
    * 参与调研
    */
   sysSurvey: z.boolean().describe("参与调研"),
-})
+});
 
-export type Setting = z.infer<typeof SettingSchema>
+export type Setting = z.infer<typeof SettingSchema>;
 
 /////////////////////////////////////////
 // NOTIFICATION SCHEMA
@@ -890,7 +1217,9 @@ export const NotificationSchema = z.object({
   /**
    * 接收人交易角色角色：NONE 未指定；SENDER 付款人；RECEIVER 收款人
    */
-  toMemberRole: ToMemberRoleSchema.describe("接收人交易角色角色：NONE 未指定；SENDER 付款人；RECEIVER 收款人"),
+  toMemberRole: ToMemberRoleSchema.describe(
+    "接收人交易角色角色：NONE 未指定；SENDER 付款人；RECEIVER 收款人"
+  ),
   /**
    * 主键
    */
@@ -922,15 +1251,26 @@ export const NotificationSchema = z.object({
   /**
    * 通知来源枚举：SYSTEM 系统自动触发；ADMIN 管理后台发送；
    */
-  source: z.string().describe("通知来源枚举：SYSTEM 系统自动触发；ADMIN 管理后台发送；"),
+  source: z
+    .string()
+    .describe("通知来源枚举：SYSTEM 系统自动触发；ADMIN 管理后台发送；"),
   /**
    * 通知主题枚举：GENERAL 普通通知；TRANS_UPDATE 交易状态更新；ALARM 欺诈或可疑活动报警；PAY_REQUEST 付款请求通知；CUSTOMER_SUPPORT 客户支持通知；BALANCE_ALARM 账户余额警报；SECURE_ALARM 安全警报；SUMMARY 每日或每周摘要；APP_UPDATE 应用程序更新与增强；SALES_PROMOTION 促销优惠与更新；SURVEY 参与调研；
    */
-  subject: z.string().describe("通知主题枚举：GENERAL 普通通知；TRANS_UPDATE 交易状态更新；ALARM 欺诈或可疑活动报警；PAY_REQUEST 付款请求通知；CUSTOMER_SUPPORT 客户支持通知；BALANCE_ALARM 账户余额警报；SECURE_ALARM 安全警报；SUMMARY 每日或每周摘要；APP_UPDATE 应用程序更新与增强；SALES_PROMOTION 促销优惠与更新；SURVEY 参与调研；"),
+  subject: z
+    .string()
+    .describe(
+      "通知主题枚举：GENERAL 普通通知；TRANS_UPDATE 交易状态更新；ALARM 欺诈或可疑活动报警；PAY_REQUEST 付款请求通知；CUSTOMER_SUPPORT 客户支持通知；BALANCE_ALARM 账户余额警报；SECURE_ALARM 安全警报；SUMMARY 每日或每周摘要；APP_UPDATE 应用程序更新与增强；SALES_PROMOTION 促销优惠与更新；SURVEY 参与调研；"
+    ),
   /**
    * 交易状态更新动作枚举：REQUEST_ACCEPTED 请求已接受；REQUEST_DECLINED 请求已拒绝；PAY_LINK_ACCEPTED PayLink已接受；
    */
-  action: z.string().nullable().describe("交易状态更新动作枚举：REQUEST_ACCEPTED 请求已接受；REQUEST_DECLINED 请求已拒绝；PAY_LINK_ACCEPTED PayLink已接受；"),
+  action: z
+    .string()
+    .nullable()
+    .describe(
+      "交易状态更新动作枚举：REQUEST_ACCEPTED 请求已接受；REQUEST_DECLINED 请求已拒绝；PAY_LINK_ACCEPTED PayLink已接受；"
+    ),
   /**
    * 标题
    */
@@ -959,9 +1299,9 @@ export const NotificationSchema = z.object({
    * 关联交易历史id
    */
   transactionHistoryId: z.number().int().nullable().describe("关联交易历史id"),
-})
+});
 
-export type Notification = z.infer<typeof NotificationSchema>
+export type Notification = z.infer<typeof NotificationSchema>;
 
 /////////////////////////////////////////
 // TRANSACTION FEE ESTIMATE SCHEMA
@@ -1032,11 +1372,15 @@ export const TransactionFeeEstimateSchema = z.object({
   /**
    * UserOperation打包前，序列化，基础校验消耗的gas
    */
-  preVerificationGas: z.string().describe("UserOperation打包前，序列化，基础校验消耗的gas"),
+  preVerificationGas: z
+    .string()
+    .describe("UserOperation打包前，序列化，基础校验消耗的gas"),
   /**
    * UserOperation打包，验证合法性，校验签名消耗的gas
    */
-  verificationGasLimit: z.string().describe("UserOperation打包，验证合法性，校验签名消耗的gas"),
+  verificationGasLimit: z
+    .string()
+    .describe("UserOperation打包，验证合法性，校验签名消耗的gas"),
   /**
    * UserOperation执行用户操作消耗的gas
    */
@@ -1065,6 +1409,8 @@ export const TransactionFeeEstimateSchema = z.object({
    * 总费用(单���token)
    */
   totalTokenCost: z.string().describe("总费用(单���token)"),
-})
+});
 
-export type TransactionFeeEstimate = z.infer<typeof TransactionFeeEstimateSchema>
+export type TransactionFeeEstimate = z.infer<
+  typeof TransactionFeeEstimateSchema
+>;

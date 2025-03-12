@@ -1,7 +1,6 @@
 import { loadFixture } from "@nomicfoundation/hardhat-toolbox-viem/network-helpers";
 import { expect } from "chai";
 import hre from "hardhat";
-import { keccak256, toUtf8Bytes } from "ethers";
 
 describe("TokenTransfer", function () {
   async function deployMockToken() {
@@ -69,13 +68,18 @@ describe("TokenTransfer", function () {
         player: [playerA, playerB],
       } = await loadFixture(deployMockToken);
 
+      const txCode = "GwXWy3fHYNhMonOQfGrzakeOQNSMjuXl";
+
       const balanceBefore = (await mockToken.read.balanceOf([
         playerA.wallet.account.address,
       ])) as bigint;
 
       const amount = 100n;
-      await playerA.token.write.approve([transfer.address, amount]);
+      const fee = 10n;
+      await playerA.token.write.approve([transfer.address, amount + fee]);
+      await playerA.transfer.write.payFee([txCode, mockToken.address, fee]);
       await playerA.transfer.write.transfer([
+        txCode,
         playerB.wallet.account.address,
         mockToken.address,
         amount,
@@ -85,7 +89,7 @@ describe("TokenTransfer", function () {
         playerA.wallet.account.address,
       ])) as bigint;
 
-      expect(balanceBefore - balanceAfter).to.eq(amount);
+      expect(balanceBefore - balanceAfter).to.eq(amount + fee);
       expect(
         await mockToken.read.balanceOf([playerB.wallet.account.address])
       ).to.eq(amount);

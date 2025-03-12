@@ -10,15 +10,16 @@ import "./TokenPayable.sol";
 
 contract TokenLink is Ownable, TokenPayable, FeeRequired, ReentrancyGuard {
     event LinkDeposit(
+        string indexed txCode,
         uint256 time,
         address from,
         address to,
         address erc20,
-        uint amount,
-        uint fee
+        uint amount
     );
 
     event LinkWithdraw(
+        string indexed txCode,
         uint256 time,
         address from,
         address to,
@@ -27,6 +28,7 @@ contract TokenLink is Ownable, TokenPayable, FeeRequired, ReentrancyGuard {
     );
 
     event LinkRevoke(
+        string indexed txCode,
         uint256 time,
         address from,
         address to,
@@ -61,37 +63,50 @@ contract TokenLink is Ownable, TokenPayable, FeeRequired, ReentrancyGuard {
     }
 
     /**
+     * （需要ERC20预授信）支付合约手续费
      *
-     * （需要ERC20预授信）将预授信的ERC20代币存入当前合约，并指定提款密码
+     * @param txCode 应用服务端生成的交易代码
+     * @param erc20 ERC20代币合约
+     * @param amount 支付金额
+     */
+    function payFee(
+        string calldata txCode,
+        IERC20 erc20,
+        uint amount
+    ) public onlyAllowance(erc20, amount) feeCollector(txCode, erc20, amount) {
+        _transferFrom(msg.sender, feeReceiver(), erc20, amount);
+    }
+
+    /**
      *
+     * （需要ERC20预授信）将预授信的ERC20代币存入当前合约，并指定提款密码，需要先调用payFee支付手续费
+     *
+     * @param txCode 应用服务端生成的交易代码
      * @param erc20 ERC20代币合约
      * @param amount 存入金额
      * @param otpHash keccak256哈希后的密码
      */
     function deposit(
+        string calldata txCode,
         IERC20 erc20,
         uint amount,
         bytes32 otpHash
-    ) public receiver(erc20, amount) {
+    ) public receiver(erc20, amount) transactional(txCode) {
         // 为了节约存储空间，存款密码是存款记录的唯一键，所以同一个用户使用相同密码，抛出密码冲突异常
         if (address(payRecordMap[msg.sender][otpHash].erc20) != address(0)) {
             revert HashCollision();
         }
 
-        // 计算并支付手续费
-        (uint fee, ) = _collectFee(erc20, amount);
-
         // 插入存款记录
-        uint amountWithoutFee = amount - fee;
-        payRecordMap[msg.sender][otpHash] = PayRecord(erc20, amountWithoutFee);
+        payRecordMap[msg.sender][otpHash] = PayRecord(erc20, amount);
 
         emit LinkDeposit(
+            txCode,
             block.timestamp,
             msg.sender,
             address(this),
             address(erc20),
-            amountWithoutFee,
-            fee
+            amount
         );
     }
 
@@ -99,10 +114,15 @@ contract TokenLink is Ownable, TokenPayable, FeeRequired, ReentrancyGuard {
      *
      * 使用提款密码提取指定用户预存的代币
      *
+     * @param txCode 应用服务端生成的交易代码
      * @param owner 预存款人钱包地址
      * @param otp 提款密码
      */
-    function withdraw(address owner, string calldata otp) public nonReentrant {
+    function withdraw(
+        string calldata txCode,
+        address owner,
+        string calldata otp
+    ) public nonReentrant {
         bytes32 otpHash = keccak256(abi.encodePacked(otp));
         mapping(bytes32 => PayRecord) storage ownerPayRecord = payRecordMap[
             owner
@@ -121,6 +141,7 @@ contract TokenLink is Ownable, TokenPayable, FeeRequired, ReentrancyGuard {
         delete ownerPayRecord[otpHash];
 
         emit LinkWithdraw(
+            txCode,
             block.timestamp,
             address(this),
             msg.sender,
@@ -133,10 +154,12 @@ contract TokenLink is Ownable, TokenPayable, FeeRequired, ReentrancyGuard {
      *
      * （合约拥有人）使用提款密码返还预存代币给预存款人
      *
+     * @param txCode 应用服务端生成的交易代码
      * @param owner 预存款人钱包地址
      * @param otp 提款密码
      */
     function revoke(
+        string calldata txCode,
         address owner,
         string calldata otp
     ) public onlyOwner nonReentrant {
@@ -158,6 +181,7 @@ contract TokenLink is Ownable, TokenPayable, FeeRequired, ReentrancyGuard {
         delete ownerPayRecord[otpHash];
 
         emit LinkWithdraw(
+            txCode,
             block.timestamp,
             address(this),
             owner,

@@ -61,12 +61,14 @@ describe("TokenLink", function () {
     };
   }
 
+  const txCode = "GwXWy3fHYNhMonOQfGrzakeOQNSMjuXl";
+
   describe("deposit", function () {
     it("Should TokenLink receive amount equal deposit amount", async function () {
       const {
         tokenLink,
         mockToken,
-        player: [playerA, playerB],
+        player: [playerA],
       } = await loadFixture(deployMockToken);
 
       const balanceBefore = (await mockToken.read.balanceOf([
@@ -74,9 +76,12 @@ describe("TokenLink", function () {
       ])) as bigint;
 
       const amount = 100n;
+      const fee = 10n;
       const otpHash = keccak256(toUtf8Bytes("123456"));
-      await playerA.token.write.approve([tokenLink.address, amount]);
+      await playerA.token.write.approve([tokenLink.address, amount + fee]);
+      await playerA.tokenLink.write.payFee([txCode, mockToken.address, fee]);
       await playerA.tokenLink.write.deposit([
+        txCode,
         mockToken.address,
         amount,
         otpHash,
@@ -86,7 +91,7 @@ describe("TokenLink", function () {
         playerA.wallet.account.address,
       ])) as bigint;
 
-      expect(balanceBefore - balanceAfter).to.eq(amount);
+      expect(balanceBefore - balanceAfter).to.eq(amount + fee);
       expect(await mockToken.read.balanceOf([tokenLink.address])).to.eq(amount);
     });
 
@@ -99,9 +104,12 @@ describe("TokenLink", function () {
 
       const deposit = async () => {
         const amount = 100;
+        const fee = 10;
         const otpHash = keccak256(toUtf8Bytes("123456"));
-        await playerA.token.write.approve([tokenLink.address, amount]);
+        await playerA.token.write.approve([tokenLink.address, amount + fee]);
+        await playerA.tokenLink.write.payFee([txCode, mockToken.address, fee]);
         await playerA.tokenLink.write.deposit([
+          txCode,
           mockToken.address,
           amount,
           otpHash,
@@ -122,10 +130,17 @@ describe("TokenLink", function () {
       } = await loadFixture(deployMockToken);
 
       const amount = 0;
+      const fee = 1;
       const otpHash = keccak256(toUtf8Bytes("123456"));
-      await playerA.token.write.approve([tokenLink.address, amount]);
+      await playerA.token.write.approve([tokenLink.address, amount + fee]);
+      await playerA.tokenLink.write.payFee([txCode, mockToken.address, fee]);
       await expect(
-        playerA.tokenLink.write.deposit([mockToken.address, amount, otpHash])
+        playerA.tokenLink.write.deposit([
+          txCode,
+          mockToken.address,
+          amount,
+          otpHash,
+        ])
       ).to.revertedWithCustomError(tokenLink, "AmountIncorrect");
     });
 
@@ -137,8 +152,15 @@ describe("TokenLink", function () {
       } = await loadFixture(deployMockToken);
 
       const otpHash = keccak256(toUtf8Bytes("123456"));
+      await playerA.token.write.approve([tokenLink.address, 1]);
+      await playerA.tokenLink.write.payFee([txCode, mockToken.address, 1]);
       await expect(
-        playerA.tokenLink.write.deposit([mockToken.address, 100, otpHash])
+        playerA.tokenLink.write.deposit([
+          txCode,
+          mockToken.address,
+          100,
+          otpHash,
+        ])
       ).to.revertedWithCustomError(tokenLink, "AllowanceRequire");
     });
   });
@@ -152,10 +174,13 @@ describe("TokenLink", function () {
       } = await loadFixture(deployMockToken);
 
       const amount = 100;
+      const fee = 10;
       const otp = "123456";
       const otpHash = keccak256(toUtf8Bytes(otp));
-      await playerA.token.write.approve([tokenLink.address, amount]);
+      await playerA.token.write.approve([tokenLink.address, amount + fee]);
+      await playerA.tokenLink.write.payFee([txCode, mockToken.address, fee]);
       await playerA.tokenLink.write.deposit([
+        txCode,
         mockToken.address,
         amount,
         otpHash,
@@ -165,6 +190,7 @@ describe("TokenLink", function () {
         playerB.wallet.account.address,
       ])) as bigint;
       await playerB.tokenLink.write.withdraw([
+        txCode,
         playerA.wallet.account.address,
         otp,
       ]);
@@ -182,9 +208,12 @@ describe("TokenLink", function () {
       } = await loadFixture(deployMockToken);
 
       const amount = 100;
+      const fee = 10;
       const otpHash = keccak256(toUtf8Bytes("123456"));
-      await playerA.token.write.approve([tokenLink.address, amount]);
+      await playerA.token.write.approve([tokenLink.address, amount + fee]);
+      await playerA.tokenLink.write.payFee([txCode, mockToken.address, fee]);
       await playerA.tokenLink.write.deposit([
+        txCode,
         mockToken.address,
         amount,
         otpHash,
@@ -192,6 +221,7 @@ describe("TokenLink", function () {
 
       await expect(
         playerB.tokenLink.write.withdraw([
+          txCode,
           playerA.wallet.account.address,
           "654321",
         ])
@@ -206,21 +236,29 @@ describe("TokenLink", function () {
       } = await loadFixture(deployMockToken);
 
       const amount = 100;
+      const fee = 10;
       const otp = "123456";
       const otpHash = keccak256(toUtf8Bytes(otp));
-      await playerA.token.write.approve([tokenLink.address, amount]);
+      await playerA.token.write.approve([tokenLink.address, amount + fee]);
+      await playerA.tokenLink.write.payFee([txCode, mockToken.address, fee]);
       await playerA.tokenLink.write.deposit([
+        txCode,
         mockToken.address,
         amount,
         otpHash,
       ]);
 
       await playerB.tokenLink.write.withdraw([
+        txCode,
         playerA.wallet.account.address,
         otp,
       ]);
       await expect(
-        playerB.tokenLink.write.withdraw([playerA.wallet.account.address, otp])
+        playerB.tokenLink.write.withdraw([
+          txCode,
+          playerA.wallet.account.address,
+          otp,
+        ])
       ).to.revertedWithCustomError(tokenLink, "OtpIncorrect");
     });
   });
@@ -241,10 +279,13 @@ describe("TokenLink", function () {
       );
 
       const amount = 100;
+      const fee = 10;
       const otp = "123456";
       const otpHash = keccak256(toUtf8Bytes(otp));
-      await playerA.token.write.approve([tokenLink.address, amount]);
+      await playerA.token.write.approve([tokenLink.address, amount + fee]);
+      await playerA.tokenLink.write.payFee([txCode, mockToken.address, fee]);
       await playerA.tokenLink.write.deposit([
+        txCode,
         mockToken.address,
         amount,
         otpHash,
@@ -252,14 +293,14 @@ describe("TokenLink", function () {
 
       const depositPlayerAddress = playerA.wallet.account.address;
       await expect(
-        playerA.tokenLink.write.revoke([depositPlayerAddress, otp])
+        playerA.tokenLink.write.revoke([txCode, depositPlayerAddress, otp])
       ).to.revertedWithCustomError(tokenLink, "OwnableUnauthorizedAccount");
 
       const balanceBefore = (await mockToken.read.balanceOf([
         depositPlayerAddress,
       ])) as bigint;
 
-      await tokenLink4Owner.write.revoke([depositPlayerAddress, otp]);
+      await tokenLink4Owner.write.revoke([txCode, depositPlayerAddress, otp]);
 
       const balanceAfter = (await mockToken.read.balanceOf([
         depositPlayerAddress,
@@ -283,16 +324,23 @@ describe("TokenLink", function () {
       );
 
       const amount = 100;
+      const fee = 10;
       const otpHash = keccak256(toUtf8Bytes("123456"));
-      await playerA.token.write.approve([tokenLink.address, amount]);
+      await playerA.token.write.approve([tokenLink.address, amount + fee]);
+      await playerA.tokenLink.write.payFee([txCode, mockToken.address, fee]);
       await playerA.tokenLink.write.deposit([
+        txCode,
         mockToken.address,
         amount,
         otpHash,
       ]);
 
       await expect(
-        tokenLink4Owner.write.revoke([playerA.wallet.account.address, "654321"])
+        tokenLink4Owner.write.revoke([
+          txCode,
+          playerA.wallet.account.address,
+          "654321",
+        ])
       ).to.be.revertedWithCustomError(tokenLink, "OtpIncorrect");
     });
 
@@ -312,18 +360,21 @@ describe("TokenLink", function () {
 
       const depositPlayerAddress = playerA.wallet.account.address;
       const amount = 100;
+      const fee = 10;
       const otp = "123456";
       const otpHash = keccak256(toUtf8Bytes(otp));
-      await playerA.token.write.approve([tokenLink.address, amount]);
+      await playerA.token.write.approve([tokenLink.address, amount + fee]);
+      await playerA.tokenLink.write.payFee([txCode, mockToken.address, fee]);
       await playerA.tokenLink.write.deposit([
+        txCode,
         mockToken.address,
         amount,
         otpHash,
       ]);
 
-      await tokenLink4Owner.write.revoke([depositPlayerAddress, otp]);
+      await tokenLink4Owner.write.revoke([txCode, depositPlayerAddress, otp]);
       await expect(
-        tokenLink4Owner.write.revoke([depositPlayerAddress, otp])
+        tokenLink4Owner.write.revoke([txCode, depositPlayerAddress, otp])
       ).to.revertedWithCustomError(tokenLink, "OtpIncorrect");
     });
   });

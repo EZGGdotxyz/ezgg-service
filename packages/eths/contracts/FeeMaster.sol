@@ -6,25 +6,24 @@ import "@openzeppelin/contracts/interfaces/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 contract FeeMaster is Ownable {
-    error IncorrectFeeReceiver();
+    using SafeERC20 for IERC20;
 
-    enum FeeType {
-        FIXED,
-        PERCENT
-    }
-
-    struct FeeRule {
+    struct Transaction {
         bool isSet;
-        FeeType feeType;
-        uint value;
+        address txOwner;
     }
+
+    error IncorrectFeeReceiver();
+    error IncorrectIssuingAuthority();
+    error IncorrectTxOwner();
 
     address feeReceiver;
-    FeeRule defaultRule = FeeRule(true, FeeType.FIXED, 0);
-    mapping(address => FeeRule) feeRules;
+    address feeIssuingAuthority;
+    mapping(string => Transaction) feeCollected;
 
     constructor(address initialOwner) Ownable(initialOwner) {
         setFeeReceiver(initialOwner);
+        setFeeIssuingAuthority(initialOwner);
     }
 
     function setFeeReceiver(address _feeReceiver) public onlyOwner {
@@ -34,30 +33,50 @@ contract FeeMaster is Ownable {
         feeReceiver = _feeReceiver;
     }
 
-    function addFeeRule(
-        address erc20Address,
-        FeeType feeType,
-        uint value
-    ) public onlyOwner {
-        feeRules[erc20Address] = FeeRule(true, feeType, value);
+    function getFeeReceiver() public view returns (address) {
+        return feeReceiver;
     }
 
-    function feeCalculate(
+    function setFeeIssuingAuthority(
+        address _feeIssuingAuthority
+    ) public onlyOwner {
+        if (_feeIssuingAuthority == address(0)) {
+            revert IncorrectIssuingAuthority();
+        }
+        feeIssuingAuthority = _feeIssuingAuthority;
+    }
+
+    function verifyTransaction(
+        string calldata txCode,
         IERC20 erc20,
         uint amount
-    ) public view returns (uint, address) {
-        FeeRule memory feeRule = feeRules[address(erc20)];
-        if (!feeRule.isSet) {
-            feeRule = defaultRule;
-        }
+    ) public {}
 
-        uint fee = 0;
-        if (feeRule.feeType == FeeType.FIXED) {
-            fee = feeRule.value;
-        } else if (feeRule.feeType == FeeType.PERCENT) {
-            fee = (amount / 100) * feeRule.value;
-        }
+    function startTransaction(string calldata txCode) public {
+        feeCollected[txCode] = Transaction(true, msg.sender);
+    }
 
-        return (fee, feeReceiver);
+    function isInTransaction(
+        string calldata txCode
+    ) public view returns (bool) {
+        return feeCollected[txCode].isSet;
+    }
+
+    function endTransaction(string calldata txCode) public {
+        if (
+            !feeCollected[txCode].isSet &&
+            feeCollected[txCode].txOwner != msg.sender
+        ) {
+            revert IncorrectTxOwner();
+        }
+        _closeTransaction(txCode);
+    }
+
+    function closeTransaction(string calldata txCode) public onlyOwner {
+        _closeTransaction(txCode);
+    }
+
+    function _closeTransaction(string calldata txCode) internal {
+        delete feeCollected[txCode];
     }
 }
