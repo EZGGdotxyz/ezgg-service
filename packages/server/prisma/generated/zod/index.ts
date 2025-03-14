@@ -34,7 +34,7 @@ export const SettingScalarFieldEnumSchema = z.enum(['id','deleted','createBy','u
 
 export const NotificationScalarFieldEnumSchema = z.enum(['id','deleted','createBy','updateBy','createAt','updateAt','deleteAt','source','subject','action','title','context','toMemberId','toMemberRole','status','notifyAt','readAt','transactionHistoryId']);
 
-export const TransactionFeeEstimateScalarFieldEnumSchema = z.enum(['id','deleted','createBy','updateBy','createAt','updateAt','deleteAt','transactionHistoryId','transactionCode','platform','chainId','ethToUsd','tokenSymbol','tokenDecimals','tokenContractAddress','tokenPrice','preVerificationGas','verificationGasLimit','callGasLimit','gas','gasPrice','totalWeiCost','totalEthCost','totalUsdCost','totalTokenCost']);
+export const TransactionFeeEstimateScalarFieldEnumSchema = z.enum(['id','deleted','createBy','updateBy','createAt','updateAt','deleteAt','transactionHistoryId','transactionCode','platform','chainId','ethToUsd','tokenSymbol','tokenDecimals','tokenContractAddress','tokenPrice','preVerificationGas','verificationGasLimit','callGasLimit','gas','gasPrice','totalWeiCost','totalEthCost','totalUsdCost','platformFee','totalTokenCost']);
 
 export const SortOrderSchema = z.enum(['asc','desc']);
 
@@ -58,7 +58,7 @@ export const PayLinkOrderByRelevanceFieldEnumSchema = z.enum(['transactionCode',
 
 export const NotificationOrderByRelevanceFieldEnumSchema = z.enum(['source','subject','action','title','context']);
 
-export const TransactionFeeEstimateOrderByRelevanceFieldEnumSchema = z.enum(['transactionCode','ethToUsd','tokenSymbol','tokenContractAddress','tokenPrice','preVerificationGas','verificationGasLimit','callGasLimit','gas','gasPrice','totalWeiCost','totalEthCost','totalUsdCost','totalTokenCost']);
+export const TransactionFeeEstimateOrderByRelevanceFieldEnumSchema = z.enum(['transactionCode','ethToUsd','tokenSymbol','tokenContractAddress','tokenPrice','preVerificationGas','verificationGasLimit','callGasLimit','gas','gasPrice','totalWeiCost','totalEthCost','totalUsdCost','platformFee','totalTokenCost']);
 
 export const MemberRecentActionSchema = z.enum(['SEND','RECEIVE']);
 
@@ -1058,17 +1058,21 @@ export const TransactionFeeEstimateSchema = z.object({
    */
   totalWeiCost: z.string().describe("总费用(单位wei)"),
   /**
-   * 总费用(单位eth)
+   * 总���用(单位eth)
    */
-  totalEthCost: z.string().describe("总费用(单位eth)"),
+  totalEthCost: z.string().describe("总���用(单位eth)"),
   /**
    * 总费用(单位usd)
    */
   totalUsdCost: z.string().describe("总费用(单位usd)"),
   /**
-   * 总费用(单位token)
+   * 平台费用(单位usd)
    */
-  totalTokenCost: z.string().describe("总费用(单位token)"),
+  platformFee: z.string().describe("平台费用(单位usd)"),
+  /**
+   * 最终费用(单位token)
+   */
+  totalTokenCost: z.string().describe("最终费用(单位token)"),
 })
 
 export type TransactionFeeEstimate = z.infer<typeof TransactionFeeEstimateSchema>

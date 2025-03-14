@@ -39,4 +39,11 @@ export const transactionApi = {
     apiClient.get("/member/transaction/history/page-transaction-history", {
       params,
     }),
+
+  // 分页查询交易记录
+  updateNetworkFee: (data: {
+    tokenContractAddress: string;
+    transactionCode: string;
+  }): Promise<API.Response<API.TransactionFeeEstimate>> =>
+    apiClient.post("/member/transaction/history/update-network-fee", data),
 };

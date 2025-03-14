@@ -169,6 +169,33 @@ export declare namespace API {
     network?: BlockChainNetwork;
     enabled?: boolean;
   };
+
+  export type TransactionFeeEstimate = {
+    id: number;
+    createBy: number;
+    updateBy: number;
+    createAt: Date;
+    updateAt: Date;
+    transactionHistoryId: number;
+    transactionCode: string;
+    platform: BlockChainPlatform;
+    chainId: number;
+    ethToUsd: string;
+    tokenSymbol: string;
+    tokenDecimals: number;
+    tokenContractAddress: string;
+    tokenPrice: string;
+    preVerificationGas: string;
+    verificationGasLimit: string;
+    callGasLimit: string;
+    gas: string;
+    gasPrice: string;
+    totalWeiCost: string;
+    totalEthCost: string;
+    totalUsdCost: string;
+    platformFee: string;
+    totalTokenCost: string;
+  };
 }
 
 // 补充枚举类型（如果尚未定义）

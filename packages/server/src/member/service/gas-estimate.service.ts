@@ -61,20 +61,33 @@ export class GasEstimateService {
     const calls = [ops.erc20.approve(trans.bizContractAddress!, trans.amount)];
     if (trans.transactionType !== TransactionType.PAY_LINK) {
       calls.push(
+        ops.tokenTransfer.payFee(
+          trans.transactionCode,
+          trans.tokenContractAddress!,
+          0
+        ),
         ops.tokenTransfer.transfer(
+          trans.transactionCode,
           trans.receiverWalletAddress!,
           trans.tokenContractAddress!,
           trans.amount
         )
       );
     } else {
+      const otp = nanoid(64);
       calls.push(
+        ops.tokenLink.payFee(
+          trans.transactionCode,
+          trans.tokenContractAddress!,
+          0
+        ),
         ops.tokenLink.deposit(
+          trans.transactionCode,
           trans.tokenContractAddress!,
           trans.amount,
-          hashKeccak256(nanoid(64))
+          hashKeccak256(otp)
         ),
-        ops.tokenLink.withdraw(trans.senderWalletAddress!, nanoid(64))
+        ops.tokenLink.withdraw(trans.transactionCode, trans.senderWalletAddress!, otp)
       );
     }
 
@@ -200,7 +213,29 @@ namespace UserOperation {
 
   export class TokenTransfer {
     constructor(private readonly contractAddress: string) {}
+
+    payFee(
+      txCode: string,
+      tokenContractAddress: string,
+      amount: number
+    ): Op {
+      return {
+        address: getAddress(this.contractAddress),
+        value: 0n,
+        callData: encodeFunctionData({
+          abi: TokenTransferContractAbi.abi,
+          functionName: "payFee",
+          args: [
+            txCode,
+            getAddress(tokenContractAddress),
+            BigInt(amount),
+          ],
+        }),
+      };
+    }
+
     transfer(
+      txCode: string,
       receiverWalletAddress: string,
       tokenContractAddress: string,
       amount: number
@@ -212,6 +247,7 @@ namespace UserOperation {
           abi: TokenTransferContractAbi.abi,
           functionName: "transfer",
           args: [
+            txCode,
             getAddress(receiverWalletAddress),
             getAddress(tokenContractAddress),
             BigInt(amount),
@@ -223,26 +259,47 @@ namespace UserOperation {
 
   export class TokenLink {
     constructor(private readonly contractAddress: string) {}
-    deposit(tokenContractAddress: string, amount: number, otp: string): Op {
+
+    payFee(
+      txCode: string,
+      tokenContractAddress: string,
+      amount: number
+    ): Op {
+      return {
+        address: getAddress(this.contractAddress),
+        value: 0n,
+        callData: encodeFunctionData({
+          abi: TokenTransferContractAbi.abi,
+          functionName: "payFee",
+          args: [
+            txCode,
+            getAddress(tokenContractAddress),
+            BigInt(amount),
+          ],
+        }),
+      };
+    }
+    
+    deposit(txCode: string,tokenContractAddress: string, amount: number, otp: string): Op {
       return {
         address: getAddress(this.contractAddress),
         value: 0n,
         callData: encodeFunctionData({
           abi: TokenLinkContractAbi.abi,
           functionName: "deposit",
-          args: [getAddress(tokenContractAddress), BigInt(amount), otp],
+          args: [txCode, getAddress(tokenContractAddress), BigInt(amount), otp],
         }),
       };
     }
 
-    withdraw(receiverWalletAddress: string, otp: string): Op {
+    withdraw(txCode: string,receiverWalletAddress: string, otp: string): Op {
       return {
         address: getAddress(this.contractAddress),
         value: 0n,
         callData: encodeFunctionData({
           abi: TokenLinkContractAbi.abi,
           functionName: "withdraw",
-          args: [getAddress(receiverWalletAddress), otp],
+          args: [txCode,getAddress(receiverWalletAddress), otp],
         }),
       };
     }

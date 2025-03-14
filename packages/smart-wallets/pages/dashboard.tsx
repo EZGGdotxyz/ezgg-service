@@ -248,23 +248,48 @@ export default function DashboardPage() {
     // })
     // console.log(estimate)
 
+    const {data: transactionFeeEstimate} = await transactionApi
+    .updateNetworkFee({
+      transactionCode: transaction.transactionCode,
+      tokenContractAddress: transaction.tokenContractAddress!,
+    });
+    const feeTokenContractAddress = getAddress(transactionFeeEstimate.tokenContractAddress);
+    const feeAmount = BigInt(transactionFeeEstimate.totalTokenCost)
+
     // 使用Privy的SmartWallet发起ERC4337标准的批量打包交易，保证代币授权和业务合约调用在同一笔交易中执行，并由payMaster代支付网络费用
     const transactionHash = await smartWalletClient.sendTransaction({
       calls:[
-        { // 调用USDC代币的approve方法，授信给转账业务合约
+        { // 调用USDC代币的approve方法，授信给转账业务合约（转账金额和手续费是同一种代币时，要把金额相加并且只调用一次approve）
           to: tokenContractAddress,
           data: encodeFunctionData({
             abi: erc20Abi,
             functionName: "approve",
-            args: [getAddress(bizContractAddress), amount]
+            args: [getAddress(bizContractAddress), amount + feeAmount]
           })
         },
-        { // 调用转账业务合约的transfer方法，将代币转给接收方（并收取手续费）
+        // 转账金额和手续费不是同种代币时，需要单独为支付手续费的代币approve方法，授信给转账业务合约
+        // { 
+        //   to: feeTokenContractAddress,
+        //   data: encodeFunctionData({
+        //     abi: erc20Abi,
+        //     functionName: "approve",
+        //     args: [getAddress(bizContractAddress), feeAmount]
+        //   })
+        // },
+        { // 先调用转账业务合约的payFee方法，支付手续费
+          to: bizContractAddress,
+          data: encodeFunctionData({
+            abi: TokenTransferContract.abi,
+            functionName: "payFee",
+            args: [transaction.transactionCode, feeTokenContractAddress, feeAmount]
+          })
+        },
+        { // 调用转账业务合约的transfer方法，将代币转给接收方
           to: bizContractAddress,
           data: encodeFunctionData({
             abi: TokenTransferContract.abi,
             functionName: "transfer",
-            args: [transaction.receiverWalletAddress!, tokenContractAddress, amount]
+            args: [transaction.transactionCode, transaction.receiverWalletAddress!, tokenContractAddress, amount]
           })
         }
       ]
@@ -308,17 +333,43 @@ export default function DashboardPage() {
       // PayLink业务合约地址
       const bizContractAddress = getAddress(payLink.bizContractAddress);
 
-      // 3. 执行智能合约调用
+      // 3. 计算手续费
+      const {data: transactionFeeEstimate} = await transactionApi
+      .updateNetworkFee({
+        transactionCode: transaction.transactionCode,
+        tokenContractAddress: transaction.tokenContractAddress!,
+      });
+      const feeTokenContractAddress = getAddress(transactionFeeEstimate.tokenContractAddress);
+      const feeAmount = BigInt(transactionFeeEstimate.totalTokenCost)
+
+      // 4. 执行智能合约调用
       const amountInUsdc = BigInt(depositAmount * 1e6);
       const transactionHash = await smartWalletClient.sendTransaction({
         calls: [
           {
-            // 调用USDC代币的approve方法，授信给PayLink业务合约
+            // 调用USDC代币的approve方法，授信给PayLink业务合约（转账金额和手续费是同一种代币时，要把金额相加并且只调用一次approve）
             to: tokenContractAddress,
             data: encodeFunctionData({
               abi: erc20Abi,
               functionName: "approve",
-              args: [bizContractAddress, amountInUsdc]
+              args: [bizContractAddress, amountInUsdc + feeAmount]
+            })
+          },
+        // 转账金额和手续费不是同种代币时，需要单独为支付手续费的代币approve方法，授信给转账业务合约
+        // { 
+        //   to: feeTokenContractAddress,
+        //   data: encodeFunctionData({
+        //     abi: erc20Abi,
+        //     functionName: "approve",
+        //     args: [getAddress(bizContractAddress), feeAmount]
+        //   })
+        // },
+          { // 先调用转账业务合约的payFee方法，支付手续费
+            to: bizContractAddress,
+            data: encodeFunctionData({
+              abi: TokenLinkContract.abi,
+              functionName: "payFee",
+              args: [transaction.transactionCode, feeTokenContractAddress, feeAmount]
             })
           },
           {
@@ -327,7 +378,7 @@ export default function DashboardPage() {
             data: encodeFunctionData({
               abi: TokenLinkContract.abi,
               functionName: "deposit",
-              args: [tokenContractAddress, amountInUsdc, payLink.otp]
+              args: [transaction.transactionCode, tokenContractAddress, amountInUsdc, payLink.otp]
             })
           }
         ]
@@ -371,6 +422,7 @@ export default function DashboardPage() {
               abi: TokenLinkContract.abi,
               functionName: "withdraw",
               args: [
+                transactionCode,
                 getAddress(payLink.senderWalletAddress),
                 payLink.otp
               ]

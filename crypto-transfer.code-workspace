@@ -1,0 +1,21 @@
+{
+	"folders": [
+		{
+			"name": "✨ crypto-transfer",
+			"path": "."
+		},
+		{
+			"name": "📦 @crypto-transfer/eths",
+			"path": "packages/eths"
+		},
+		{
+			"name": "📦 @crypto-transfer/server",
+			"path": "packages/server"
+		},
+		{
+			"name": "📦 @crypto-transfer/smart-wallets",
+			"path": "packages/smart-wallets"
+		}
+	],
+	"settings": {}
+}

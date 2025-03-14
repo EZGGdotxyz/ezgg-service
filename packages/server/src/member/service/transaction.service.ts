@@ -32,7 +32,6 @@ import { nanoid } from "nanoid";
 import { formatUnits, getAddress } from "viem";
 import { Decimal } from "decimal.js";
 import type { OpenExchangeRates } from "../../plugins/open-exchange-rates.js";
-import { send } from "process";
 
 export enum TransactionHistorySubject {
   INCOME = "INCOME",

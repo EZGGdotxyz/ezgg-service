@@ -1,6 +1,5 @@
 {
-  "FeeMasterModule#FeeMaster": "0x1FE66e50eb22C624337F1c8175c6618d96C571a9",
-  "TokenLinkModule#TokenLink": "0x469798aF201bec7ab2A7F9A58174EC730afE7016",
-  "TokenTransferModule#TokenTransfer": "0xb5E6435BAD8C89aE1743A6b397FA9AACb32a16b6",
-  "SimpleTransferModule#SimpleTransfer": "0x57ADB4656428e6D804249A77AEcD95b10cbC353A"
+  "FeeMasterModule#FeeMaster": "0xC65821FB3A0C1c6962a8cd5422cd65f6A3998ceA",
+  "TokenTransferModule#TokenTransfer": "0x336E9e810a1aD8d526c9bd94e41a2B9953cefca9",
+  "TokenLinkModule#TokenLink": "0xb602476cd8f106FcD583B00E161e038fe2606E08"
 }

@@ -36,6 +36,9 @@ importers:
       css-loader:
         specifier: ^6.5.1
         version: 6.11.0(webpack@5.98.0)
+      dotenv:
+        specifier: ^16.4.7
+        version: 16.4.7
       ethers:
         specifier: ^6.13.5
         version: 6.13.5
