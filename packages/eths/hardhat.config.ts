@@ -15,10 +15,19 @@ const config: HardhatUserConfig = {
         ? [process.env.DEPLOYER_PRIVATE_KEY]
         : [],
     },
+    polygonAmoy: {
+      chainId: 80002,
+      url: `https://polygon-amoy.g.alchemy.com/v2/${process.env
+        .ALCHEMY_API_KEY!}`,
+      accounts: process.env.DEPLOYER_PRIVATE_KEY
+        ? [process.env.DEPLOYER_PRIVATE_KEY]
+        : [],
+    },
   },
   etherscan: {
     apiKey: {
-      baseSepolia: process.env.BASE_SCAN_API_KEY!,
+      baseSepolia: process.env.BASE_TESTNET_BASE_SCAN_API_KEY!,
+      polygonAmoy: process.env.POLYGON_TESTNET_BASE_SCAN_API_KEY!,
     },
     customChains: [
       {
@@ -27,6 +36,14 @@ const config: HardhatUserConfig = {
         urls: {
           apiURL: "https://api-sepolia.basescan.org/api",
           browserURL: "https://sepolia.basescan.org",
+        },
+      },
+      {
+        network: "polygonAmoy",
+        chainId: 80002,
+        urls: {
+          apiURL: "https://api-amoy.polygonscan.com/api",
+          browserURL: "https://amoy.polygonscan.com",
         },
       },
     ],

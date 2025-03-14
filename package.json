@@ -6,6 +6,7 @@
   "scripts": {
     "server:dev": "pnpm -F @crypto-transfer/server dev",
     "server:deploy": "pnpm shipit --shipitfile deployment/crypto-transfer-server/shipitfile.cjs default all",
+    "server:deploy:dev": "pnpm shipit --shipitfile deployment/crypto-transfer-server/shipitfile.cjs development all",
     "server:deploy:pro": "pnpm shipit --shipitfile deployment/crypto-transfer-server/shipitfile.cjs production all"
   },
   "keywords": [],

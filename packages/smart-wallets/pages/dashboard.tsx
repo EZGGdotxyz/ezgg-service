@@ -3,8 +3,8 @@ import { useSmartWallets } from "@privy-io/react-auth/smart-wallets";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import { encodeFunctionData, erc721Abi, erc20Abi, createPublicClient, http, getAddress } from "viem";
-import { baseSepolia } from "viem/chains";
+import { encodeFunctionData, erc721Abi, erc20Abi, createPublicClient, http, getAddress, Chain } from "viem";
+import { baseSepolia, polygonAmoy } from "viem/chains";
 import { memberApi } from "../api/member";
 import { transactionApi } from "../api/transaction";
 import TokenTransferContract from '../public/abi/TokenTransfer.json'
@@ -13,7 +13,12 @@ import { API, BlockChainNetwork, BlockChainPlatform, TransactionCategory, Transa
 import { paylinkApi } from "../api/paylink";
 import { infrastructureApi } from "../api/infrastructure.api";
 
-const USDC_ADDRESS = "0x036CbD53842c5426634e7929541eC2318f3dCF7e" as const;
+// const defaultChainId = 84532
+// const chain: Chain = baseSepolia;
+// const USDC_ADDRESS = "0x036CbD53842c5426634e7929541eC2318f3dCF7e" as const;
+const defaultChainId = 80002
+const chain: Chain = polygonAmoy;
+const USDC_ADDRESS = "0x41e94eb019c0762f9bfcf9fb1e58725bfb0e7582" as const;
 export default function DashboardPage() {
   const router = useRouter();
   const { ready, authenticated, user, logout } = usePrivy();
@@ -28,7 +33,7 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null);
   const [withdrawAmount, setWithdrawAmount] = useState("");
   const publicClient = createPublicClient({
-    chain: baseSepolia,
+    chain,
     transport: http()
   });
   const [showTransferModal, setShowTransferModal] = useState(false);
@@ -137,7 +142,7 @@ export default function DashboardPage() {
 
     // 调用Privy的fundWallet方法，将外部钱包的USDC存入smartWallet钱包
     fundWallet(user.smartWallet.address, {
-      chain: baseSepolia,
+      chain,
       asset: {erc20: USDC_ADDRESS},
       amount: fundAmount
     }).finally(() => {
@@ -457,7 +462,7 @@ export default function DashboardPage() {
   const [platform, setPlatform] = useState<BlockChainPlatform>(BlockChainPlatform.ETH);
   const [network, setNetwork] = useState<BlockChainNetwork>(BlockChainNetwork.TEST);
   const [chains, setChains] = useState<API.BlockChain[]>([]);
-  const [selectedChain, setSelectedChain] = useState<number>(84532); // 默认chainId
+  const [selectedChain, setSelectedChain] = useState<number>(defaultChainId); // 默认chainId
 
   // 新增数据加载逻辑
   useEffect(() => {
@@ -470,7 +475,7 @@ export default function DashboardPage() {
         setChains(response.data);
         
         // 设置默认选中chain
-        const defaultChain = response.data.find(c => c.chainId === 84532);
+        const defaultChain = response.data.find(c => c.chainId === defaultChainId);
         if (defaultChain) {
           setSelectedChain(defaultChain.chainId);
         }

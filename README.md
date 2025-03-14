@@ -17,6 +17,13 @@ pnpm hardhat ignition deploy ignition/modules/FeeMaster.ts --network baseSepolia
 pnpm hardhat ignition deploy ignition/modules/TokenTransfer.ts --network baseSepolia --verify
 # BASE SEPOLIA上部署并验证TokenLink.sol
 pnpm hardhat ignition deploy ignition/modules/TokenLink.ts --network baseSepolia --verify
+
+# Polygon Amoy上部署并验证FeeMaster.sol
+pnpm hardhat ignition deploy ignition/modules/FeeMaster.ts --network polygonAmoy --verify
+# Polygon Amoy上部署并验证TokenTransfer.sol
+pnpm hardhat ignition deploy ignition/modules/TokenTransfer.ts --network polygonAmoy --verify
+# Polygon Amoy上部署并验证TokenLink.sol
+pnpm hardhat ignition deploy ignition/modules/TokenLink.ts --network polygonAmoy --verify
 ```
 
 ## server
