@@ -7,11 +7,17 @@ module.exports = (shipit) => {
   const util = require("util");
   const exec = util.promisify(require("child_process").exec);
 
+  // const rootPath = "./";
+  // const imageName = "crypto-transfer-server";
+  // const imageTag = "1.0.0";
+  // const imageTarfile = `docker-image-${imageName}-${imageTag}.tar`;
+  // const remotePath = "/app/srv/crypto-transfer-server";
+
   const rootPath = "./";
   const imageName = "crypto-transfer-server";
-  const imageTag = "1.0.0";
+  const imageTag = "2.0.0";
   const imageTarfile = `docker-image-${imageName}-${imageTag}.tar`;
-  const remotePath = "/app/srv/crypto-transfer-server";
+  const remotePath = "/app/srv/crypto-transfer-server-v2";
 
   shipit.initConfig({
     default: {
@@ -19,8 +25,8 @@ module.exports = (shipit) => {
       servers: "app@ec2-18-142-44-209.ap-southeast-1.compute.amazonaws.com",
     },
     development: {
-      key: "./deployment/keys/drol_app_rsa",
-      servers: "app@120.76.41.50",
+      key: "./deployment/keys/snapx_pro_rsa",
+      servers: "app@ec2-18-142-44-209.ap-southeast-1.compute.amazonaws.com",
     },
     production: {
       key: "./deployment/keys/id_rsa_egzz_app",
