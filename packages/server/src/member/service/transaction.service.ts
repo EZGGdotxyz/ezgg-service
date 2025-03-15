@@ -523,7 +523,9 @@ export class TransactionHistoryService {
           },
         },
       });
-    const transactionFeeMap = new Map(transactionFeeList.map((x) => [x.id, x]));
+    const transactionFeeMap = new Map(
+      transactionFeeList.map((x) => [x.transactionHistoryId, x])
+    );
 
     for (const item of trans) {
       const tokenAmount = item.tokenDecimals
@@ -639,6 +641,7 @@ export const TransactionHistorySchemas = {
     currencyAmount: z.string({ description: "货币余额" }).optional(),
     senderMember: MemberSchemas.MemberOutput.nullish(),
     receiverMember: MemberSchemas.MemberOutput.nullish(),
+    networkFee: TransactionFeeEstimateSchema.nullish(),
   }).nullable(),
   TransactionHistoryQueryResult: PageUtils.asPagedResult(
     TransactionHistorySchema.extend({
