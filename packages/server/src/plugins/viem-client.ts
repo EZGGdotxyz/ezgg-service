@@ -6,9 +6,8 @@ import {
   baseSepolia,
   polygon,
   polygonAmoy,
-  polygonMumbai,
-  opBNB,
-  opBNBTestnet,
+  bsc,
+  bscTestnet,
 } from "viem/chains";
 import { PARAMETER_ERROR } from "../core/error.js";
 import { BlockChainPlatform } from "@prisma/client";
@@ -25,15 +24,7 @@ export interface ViemClients {
 
 export type ViemClient = ReturnType<typeof createClient>;
 
-const chains = [
-  base,
-  baseSepolia,
-  polygon,
-  polygonAmoy,
-  polygonMumbai,
-  opBNB,
-  opBNBTestnet,
-];
+const chains = [base, baseSepolia, polygon, polygonAmoy, bsc, bscTestnet];
 
 const plugins: FastifyPluginAsync = async (fastify) => {
   const cached = new Map<number, ViemClient>();

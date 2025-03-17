@@ -1,0 +1,5 @@
+{
+  "FeeMasterModule#FeeMaster": "0x2007b3764D226E88Cb6920895c62184E17154680",
+  "TokenTransferModule#TokenTransfer": "0x3C900bb62BE2C6CEA54cb8d8286a2183cbe2355f",
+  "TokenLinkModule#TokenLink": "0x6EA40706E5A33DD5a93b4a2275F1d77777b3771C"
+}

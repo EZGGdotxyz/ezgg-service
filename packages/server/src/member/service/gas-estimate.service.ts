@@ -91,12 +91,18 @@ export class GasEstimateService {
       );
     }
 
-    const { preVerificationGas, verificationGasLimit, callGasLimit } =
+    const { preVerificationGas, verificationGasLimit, callGasLimit } = trans.chainId !== 97  ?
       await simpleAccountHandler.estimateUserOperationGas({
         sender: getAddress(trans.senderWalletAddress!),
         calls,
-      });
+      }) : {
+        preVerificationGas: "0x0" as `0x${string}`,
+        verificationGasLimit: "0x0" as `0x${string}`,
+        callGasLimit: "0x0" as `0x${string}`,
+      };
     const gasPrice = await alchemy.core.getGasPrice();
+
+    
 
     return compute({
       preVerificationGas,

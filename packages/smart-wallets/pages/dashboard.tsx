@@ -1,10 +1,10 @@
-import { useFundWallet, usePrivy, useUser } from "@privy-io/react-auth";
+import { useFundWallet, usePrivy, useUser, useWallets } from "@privy-io/react-auth";
 import { useSmartWallets } from "@privy-io/react-auth/smart-wallets";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import { encodeFunctionData, erc721Abi, erc20Abi, createPublicClient, http, getAddress, Chain } from "viem";
-import { baseSepolia, polygonAmoy } from "viem/chains";
+import { encodeFunctionData, erc721Abi, erc20Abi, createPublicClient, http, getAddress, Chain, Hex } from "viem";
+import { baseSepolia, polygonAmoy, bscTestnet } from "viem/chains";
 import { memberApi } from "../api/member";
 import { transactionApi } from "../api/transaction";
 import TokenTransferContract from '../public/abi/TokenTransfer.json'
@@ -12,17 +12,26 @@ import TokenLinkContract from '../public/abi/TokenLink.json'
 import { API, BlockChainNetwork, BlockChainPlatform, TransactionCategory, TransactionType } from "../api/api";
 import { paylinkApi } from "../api/paylink";
 import { infrastructureApi } from "../api/infrastructure.api";
+import { createBicoPaymasterClient, createSmartAccountClient, NexusClient, toNexusAccount } from "@biconomy/abstractjs";
+import {createWalletClient, custom} from 'viem';
 
 // const defaultChainId = 84532
 // const chain: Chain = baseSepolia;
 // const USDC_ADDRESS = "0x036CbD53842c5426634e7929541eC2318f3dCF7e" as const;
-const defaultChainId = 80002
-const chain: Chain = polygonAmoy;
-const USDC_ADDRESS = "0x41e94eb019c0762f9bfcf9fb1e58725bfb0e7582" as const;
+
+// const defaultChainId = 80002
+// const chain: Chain = polygonAmoy;
+// const USDC_ADDRESS = "0x41e94eb019c0762f9bfcf9fb1e58725bfb0e7582" as const;
+
+const defaultChainId = 97
+const chain: Chain = bscTestnet;
+const USDC_ADDRESS = "0x64544969ed7EBf5f083679233325356EbE738930" as const;
+
 export default function DashboardPage() {
   const router = useRouter();
   const { ready, authenticated, user, logout } = usePrivy();
   const {fundWallet} = useFundWallet();
+  
   const { client: smartWalletClient } = useSmartWallets();
   const [showBalanceModal, setShowBalanceModal] = useState(false);
   const [usdcBalance, setUsdcBalance] = useState<string>("");
@@ -47,6 +56,39 @@ export default function DashboardPage() {
   const [showPayLinkWithdrawModal, setShowPayLinkWithdrawModal] = useState(false);
   const [transactionCode, setTransactionCode] = useState<string>("");
   const [isWithdrawing, setIsWithdrawing] = useState(false);
+
+  const { wallets } = useWallets();
+  
+  const [nexusClient, setNexusClient] = useState<NexusClient | null>(null);
+
+
+ 
+  useEffect(() => { 
+    const embeddedWallet = wallets.find((wallet) => (wallet.walletClientType === 'privy'));
+    if (embeddedWallet) {
+        (async () => {            // 获取 Ethers.js 的 Signer
+            const provider = await embeddedWallet.getEthereumProvider();
+            const walletClient = createWalletClient({
+              account: embeddedWallet.address as Hex,
+              chain,
+              transport: custom(provider),
+            });
+            const nexusClient = createSmartAccountClient({ 
+                account: await toNexusAccount({
+                    signer: walletClient, 
+                    chain,
+                    transport: http(),
+                }),
+                transport: http("https://bundler.biconomy.io/api/v3/97/nJPK7B3ru.dd7f7861-190d-41bd-af80-6877f74b8f44"), // Get your BUNDLER_URL from the Biconomy Dashboard
+                paymaster: createBicoPaymasterClient({paymasterUrl: "https://paymaster.biconomy.io/api/v2/97/9Yzu5pN8q.f2b8eeaa-1320-44d5-ad12-9bf5c2cdc189"})
+            });
+
+            setNexusClient(nexusClient);
+        })();
+    }
+  }, [wallets]);
+
+
 
   useEffect(() => {
     if (ready && !authenticated) {
@@ -261,49 +303,92 @@ export default function DashboardPage() {
     const feeTokenContractAddress = getAddress(transactionFeeEstimate.tokenContractAddress);
     const feeAmount = BigInt(transactionFeeEstimate.totalTokenCost)
 
-    // 使用Privy的SmartWallet发起ERC4337标准的批量打包交易，保证代币授权和业务合约调用在同一笔交易中执行，并由payMaster代支付网络费用
-    const transactionHash = await smartWalletClient.sendTransaction({
-      calls:[
-        { // 调用USDC代币的approve方法，授信给转账业务合约（转账金额和手续费是同一种代币时，要把金额相加并且只调用一次approve）
-          to: tokenContractAddress,
-          data: encodeFunctionData({
-            abi: erc20Abi,
-            functionName: "approve",
-            args: [getAddress(bizContractAddress), amount + feeAmount]
-          })
-        },
-        // 转账金额和手续费不是同种代币时，需要单独为支付手续费的代币approve方法，授信给转账业务合约
-        // { 
-        //   to: feeTokenContractAddress,
-        //   data: encodeFunctionData({
-        //     abi: erc20Abi,
-        //     functionName: "approve",
-        //     args: [getAddress(bizContractAddress), feeAmount]
-        //   })
-        // },
-        { // 先调用转账业务合约的payFee方法，支付手续费
-          to: bizContractAddress,
-          data: encodeFunctionData({
-            abi: TokenTransferContract.abi,
-            functionName: "payFee",
-            args: [transaction.transactionCode, feeTokenContractAddress, feeAmount]
-          })
-        },
-        { // 调用转账业务合约的transfer方法，将代币转给接收方
-          to: bizContractAddress,
-          data: encodeFunctionData({
-            abi: TokenTransferContract.abi,
-            functionName: "transfer",
-            args: [transaction.transactionCode, transaction.receiverWalletAddress!, tokenContractAddress, amount]
-          })
-        }
-      ]
-    });
+    
+
+    let transactionHash: string | undefined;
+    if (defaultChainId === 97) {
+      transactionHash = await nexusClient?.sendUserOperation({
+        calls:[
+          { // 调用USDC代币的approve方法，授信给转账业务合约（转账金额和手续费是同一种代币时，要把金额相加并且只调用一次approve）
+            to: tokenContractAddress,
+            data: encodeFunctionData({
+              abi: erc20Abi,
+              functionName: "approve",
+              args: [getAddress(bizContractAddress), amount + feeAmount]
+            })
+          },
+          // 转账金额和手续费不是同种代币时，需要单独为支付手续费的代币approve方法，授信给转账业务合约
+          // { 
+          //   to: feeTokenContractAddress,
+          //   data: encodeFunctionData({
+          //     abi: erc20Abi,
+          //     functionName: "approve",
+          //     args: [getAddress(bizContractAddress), feeAmount]
+          //   })
+          // },
+          { // 先调用转账业务合约的payFee方法，支付手续费
+            to: bizContractAddress,
+            data: encodeFunctionData({
+              abi: TokenTransferContract.abi,
+              functionName: "payFee",
+              args: [transaction.transactionCode, feeTokenContractAddress, feeAmount]
+            })
+          },
+          { // 调用转账业务合约的transfer方法，将代币转给接收方
+            to: bizContractAddress,
+            data: encodeFunctionData({
+              abi: TokenTransferContract.abi,
+              functionName: "transfer",
+              args: [transaction.transactionCode, transaction.receiverWalletAddress!, tokenContractAddress, amount]
+            })
+          }
+        ]
+      })
+    } else {
+      // 使用Privy的SmartWallet发起ERC4337标准的批量打包交易，保证代币授权和业务合约调用在同一笔交易中执行，并由payMaster代支付网络费用
+      transactionHash = await smartWalletClient.sendTransaction({
+        calls:[
+          { // 调用USDC代币的approve方法，授信给转账业务合约（转账金额和手续费是同一种代币时，要把金额相加并且只调用一次approve）
+            to: tokenContractAddress,
+            data: encodeFunctionData({
+              abi: erc20Abi,
+              functionName: "approve",
+              args: [getAddress(bizContractAddress), amount + feeAmount]
+            })
+          },
+          // 转账金额和手续费不是同种代币时，需要单独为支付手续费的代币approve方法，授信给转账业务合约
+          // { 
+          //   to: feeTokenContractAddress,
+          //   data: encodeFunctionData({
+          //     abi: erc20Abi,
+          //     functionName: "approve",
+          //     args: [getAddress(bizContractAddress), feeAmount]
+          //   })
+          // },
+          { // 先调用转账业务合约的payFee方法，支付手续费
+            to: bizContractAddress,
+            data: encodeFunctionData({
+              abi: TokenTransferContract.abi,
+              functionName: "payFee",
+              args: [transaction.transactionCode, feeTokenContractAddress, feeAmount]
+            })
+          },
+          { // 调用转账业务合约的transfer方法，将代币转给接收方
+            to: bizContractAddress,
+            data: encodeFunctionData({
+              abi: TokenTransferContract.abi,
+              functionName: "transfer",
+              args: [transaction.transactionCode, transaction.receiverWalletAddress!, tokenContractAddress, amount]
+            })
+          }
+        ]
+      });
+    }
 
     // 更新交易记录的交易哈希字段
     await transactionApi.updateTransactionHash({
       id: transaction.id,
-      transactionHash
+      transactionHash:transactionHash!
     });
 
     setShowTransferModal(false);

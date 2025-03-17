@@ -24,6 +24,22 @@ pnpm hardhat ignition deploy ignition/modules/FeeMaster.ts --network polygonAmoy
 pnpm hardhat ignition deploy ignition/modules/TokenTransfer.ts --network polygonAmoy --verify
 # Polygon Amoy上部署并验证TokenLink.sol
 pnpm hardhat ignition deploy ignition/modules/TokenLink.ts --network polygonAmoy --verify
+
+
+# BNB Testnet上部署并验证FeeMaster.sol
+pnpm hardhat ignition deploy ignition/modules/FeeMaster.ts --network bnbTestnet --verify
+# BNB Testnet上部署并验证TokenTransfer.sol
+pnpm hardhat ignition deploy ignition/modules/TokenTransfer.ts --network bnbTestnet --verify
+# BNB Testnet上部署并验证TokenLink.sol
+pnpm hardhat ignition deploy ignition/modules/TokenLink.ts --network bnbTestnet --verify
+
+# BASE 上部署并验证FeeMaster.sol
+pnpm hardhat ignition deploy ignition/modules/FeeMaster.ts --network base --verify
+# BASE 上部署并验证TokenTransfer.sol
+pnpm hardhat ignition deploy ignition/modules/TokenTransfer.ts --network base --verify
+# BASE 上部署并验证TokenLink.sol
+pnpm hardhat ignition deploy ignition/modules/TokenLink.ts --network base --verify
+
 ```
 
 ## server
