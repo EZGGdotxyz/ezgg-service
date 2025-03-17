@@ -45,7 +45,7 @@ function MyApp({ Component, pageProps }: AppProps) {
       <PrivyProvider
         appId={process.env.NEXT_PUBLIC_PRIVY_APP_ID || ""}
         config={{
-          defaultChain: bscTestnet,
+          defaultChain: baseSepolia,
           supportedChains: [baseSepolia, polygonAmoy, bscTestnet],
           embeddedWallets: {
             createOnLogin: "all-users",

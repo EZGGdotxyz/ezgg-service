@@ -96,6 +96,7 @@ export const EnvironmentSchema = z.object({
   MAX_FILE_SIZE: z.number().optional(),
   FILE_BASE_URL: z.string(),
   OPEN_EXCHANGE_RATES_APP_ID: z.string(),
+  PLATFORM_FEE_SCALE: z.string(),
   PLATFORM_FEE: z.string(),
 });
 

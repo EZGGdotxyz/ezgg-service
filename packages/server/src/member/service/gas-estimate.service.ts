@@ -17,6 +17,7 @@ import {
   keccak256,
   toHex,
   parseUnits,
+  formatUnits,
 } from "viem";
 import type { FastifyInstance } from "fastify";
 import { ViemClient } from "../../plugins/viem-client.js";
@@ -102,8 +103,6 @@ export class GasEstimateService {
       };
     const gasPrice = await alchemy.core.getGasPrice();
 
-    
-
     return compute({
       preVerificationGas,
       verificationGasLimit,
@@ -112,6 +111,7 @@ export class GasEstimateService {
       trans,
       token,
       ethToUsd: ethValue.tokenPrice!,
+      platformFeeScale: this.fastify.config.PLATFORM_FEE_SCALE,
       platformFee: this.fastify.config.PLATFORM_FEE,
     });
   }
@@ -143,6 +143,7 @@ function compute({
   trans,
   token,
   ethToUsd,
+  platformFeeScale,
   platformFee
 }: {
   preVerificationGas: `0x${string}`;
@@ -152,8 +153,19 @@ function compute({
   trans: TransactionHistory;
   token: TokenContract;
   ethToUsd: string;
+  platformFeeScale: string;
   platformFee: string;
 }): Prisma.TransactionFeeEstimateCreateManyInput {
+  let platformFeeUsd;
+  if (trans.tokenFeeSupport) {
+    const scale =  new Decimal(platformFeeScale);
+    const amountInToken = formatUnits(BigInt(trans.amount), trans.tokenDecimals!)
+    const fee = new Decimal(amountInToken).mul(scale).div(100);
+    platformFeeUsd = fee.mul(new Decimal(trans.tokenPrice!))
+  } else {
+    platformFeeUsd =  new Decimal(platformFee);
+  }
+
   const BN = {
     preVerificationGas: BigNumber.from(preVerificationGas),
     verificationGasLimit: BigNumber.from(verificationGasLimit),
@@ -166,14 +178,13 @@ function compute({
   const totalWeiCost = gas.mul(gasPrice);
   const totalEthCost = new Decimal(Utils.formatUnits(totalWeiCost, "ether"));
   const totalUsdCost = totalEthCost.mul(new Decimal(ethToUsd));
-  const platformFeeUsd = new Decimal(platformFee);
   const totalTokenCost = totalUsdCost.plus(platformFeeUsd).div(new Decimal(token.priceValue!));
 
   const cost = {
     totalWeiCost: totalWeiCost.toString(),
     totalEthCost: totalEthCost.toFixed(),
     totalUsdCost: totalUsdCost.toFixed(),
-    platformFee,
+    platformFee: platformFeeUsd.toFixed(),
     totalTokenCost: parseUnits(totalTokenCost.toFixed(token.tokenDecimals!),token.tokenDecimals!).toString(),
   };
 

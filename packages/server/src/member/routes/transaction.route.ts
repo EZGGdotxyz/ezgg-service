@@ -68,7 +68,10 @@ const route: FastifyPluginAsyncZod = async (fastify) => {
       ApiUtils.ok(
         await fastify.diContainer
           .get<TransactionHistoryService>(Symbols.TransactionHistoryService)
-          .updateNetworkFee(request.body)
+          .updateNetworkFee({
+            ...request.body,
+            memberId: request.privyUser?.customMetadata.id! as number,
+          })
       )
   );
 

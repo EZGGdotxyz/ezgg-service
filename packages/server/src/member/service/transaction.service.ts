@@ -162,7 +162,10 @@ export class TransactionHistoryService {
       transactionType === TransactionType.REQUEST_QR_CODE ||
       transactionType === TransactionType.DEPOSIT
     ) {
-      if (transactionType !== TransactionType.REQUEST_LINK) {
+      if (
+        transactionType !== TransactionType.REQUEST_LINK &&
+        transactionType !== TransactionType.DEPOSIT
+      ) {
         if (!input.senderMemberId) {
           throw PARAMETER_ERROR({ message: "please choose a sender" });
         }
@@ -224,6 +227,7 @@ export class TransactionHistoryService {
   async updateNetworkFee({
     transactionCode,
     tokenContractAddress,
+    memberId,
   }: NetworkFeeUpdateInput): Promise<NetworkFeeUpdateOutput> {
     const trans = await this.prisma.transactionHistory.findUnique({
       where: { transactionCode },
@@ -242,6 +246,27 @@ export class TransactionHistoryService {
     if (!token.feeSupport) {
       throw PARAMETER_ERROR({ message: "token not support for pay fee" });
     }
+
+    if (!trans.senderWalletAddress) {
+      if (!memberId) {
+        throw PARAMETER_ERROR({ message: "please choose a sender" });
+      }
+      const senderMember = await this.memberService.findMember({
+        id: memberId,
+      });
+      if (!senderMember) {
+        throw UNEXPECTED({ message: "sender member not exist" });
+      }
+      const senderWalletAddress =
+        await this.memberService.findSmartWalletAddress({
+          did: senderMember.did,
+        });
+      if (!senderWalletAddress || _.isEmpty(senderWalletAddress)) {
+        throw UNEXPECTED({ message: "sender have no smart wallet" });
+      }
+      trans.senderWalletAddress = senderWalletAddress;
+    }
+
     const estimateNetworkFee = await this.gasEstimateService.estimateNetworkFee(
       { trans, token }
     );
@@ -659,7 +684,7 @@ export type TransactionHistoryCreateInput = z.infer<
 > & { memberId: number };
 export type NetworkFeeUpdateInput = z.infer<
   typeof TransactionHistorySchemas.NetworkFeeUpdateInput
->;
+> & { memberId: number };
 export type NetworkFeeUpdateOutput = z.infer<
   typeof TransactionHistorySchemas.NetworkFeeUpdateOutput
 >;

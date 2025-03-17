@@ -15,17 +15,17 @@ import { infrastructureApi } from "../api/infrastructure.api";
 import { createBicoPaymasterClient, createSmartAccountClient, NexusClient, toNexusAccount } from "@biconomy/abstractjs";
 import {createWalletClient, custom} from 'viem';
 
-// const defaultChainId = 84532
-// const chain: Chain = baseSepolia;
-// const USDC_ADDRESS = "0x036CbD53842c5426634e7929541eC2318f3dCF7e" as const;
+const defaultChainId = 84532
+const chain: Chain = baseSepolia;
+const USDC_ADDRESS = "0x036CbD53842c5426634e7929541eC2318f3dCF7e" as const;
 
 // const defaultChainId = 80002
 // const chain: Chain = polygonAmoy;
 // const USDC_ADDRESS = "0x41e94eb019c0762f9bfcf9fb1e58725bfb0e7582" as const;
 
-const defaultChainId = 97
-const chain: Chain = bscTestnet;
-const USDC_ADDRESS = "0x64544969ed7EBf5f083679233325356EbE738930" as const;
+// const defaultChainId = 97
+// const chain: Chain = bscTestnet;
+// const USDC_ADDRESS = "0x64544969ed7EBf5f083679233325356EbE738930" as const;
 
 export default function DashboardPage() {
   const router = useRouter();
