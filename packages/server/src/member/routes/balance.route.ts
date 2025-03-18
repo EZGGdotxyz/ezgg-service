@@ -42,7 +42,8 @@ const route: FastifyPluginAsyncZod = async (fastify) => {
       return ApiUtils.ok(
         await balanceService.findBalance({
           ...request.query,
-          smartWalletAddress,
+          smartWalletAddress:
+            request.query.smartWalletAddress ?? smartWalletAddress,
         })
       );
     }
@@ -78,7 +79,8 @@ const route: FastifyPluginAsyncZod = async (fastify) => {
       return ApiUtils.ok(
         await balanceService.listBalance({
           ...request.query,
-          smartWalletAddress,
+          smartWalletAddress:
+            request.query.smartWalletAddress ?? smartWalletAddress,
         })
       );
     }

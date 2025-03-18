@@ -46,7 +46,7 @@ export class BalanceService {
 
     const alchemy = this.alchemy.get(blockChain.alchemyNetwork as Network);
     const { tokenBalances } = await alchemy.core.getTokenBalances(
-      smartWalletAddress,
+      smartWalletAddress!,
       [address]
     );
     const token = await this.blockChainService.findTokenContract({
@@ -95,7 +95,7 @@ export class BalanceService {
 
     const alchemy = this.alchemy.get(blockChain.alchemyNetwork as Network);
     const { tokenBalances } = await alchemy.core.getTokenBalances(
-      smartWalletAddress
+      smartWalletAddress!
     );
     const tokenMap = await this.blockChainService.mappingTokenContract({
       platform,
@@ -179,7 +179,7 @@ export class BalanceService {
     }
     const tokenAmount = token?.tokenDecimals
       ? formatUnits(BigInt(tokenBalance ?? "0"), token.tokenDecimals)
-      : tokenBalance ?? "0";
+      : new Decimal(tokenBalance ?? "0").toString();
     let currencyAmount = token?.priceValue
       ? new Decimal(tokenAmount)
           .mul(new Decimal(token.priceValue))
@@ -208,6 +208,7 @@ export const BalanceSchemas = {
       .optional()
       .default("USD"),
     address: z.string({ description: "代币合约地址" }),
+    smartWalletAddress: z.string({ description: "钱包地址" }).optional(),
   }),
   BalanceFindOutput: BalanceTokenSchema,
   BalanceQuery: z.object({
@@ -218,6 +219,7 @@ export const BalanceSchemas = {
       .optional()
       .default("USD"),
     feeSupport: z.boolean({ description: "是否支持手续费" }).optional(),
+    smartWalletAddress: z.string({ description: "钱包地址" }).optional(),
   }),
   BalanceOutput: z.object({
     summary: z.object({
@@ -228,15 +230,9 @@ export const BalanceSchemas = {
   }),
 };
 
-export type BalanceFindInput = z.infer<
-  typeof BalanceSchemas.BalanceFindInput
-> & {
-  smartWalletAddress: string;
-};
+export type BalanceFindInput = z.infer<typeof BalanceSchemas.BalanceFindInput>;
 export type BalanceFindOutput = z.infer<
   typeof BalanceSchemas.BalanceFindOutput
 >;
-export type BalanceQuery = z.infer<typeof BalanceSchemas.BalanceQuery> & {
-  smartWalletAddress: string;
-};
+export type BalanceQuery = z.infer<typeof BalanceSchemas.BalanceQuery>;
 export type BalanceOutput = z.infer<typeof BalanceSchemas.BalanceOutput>;
