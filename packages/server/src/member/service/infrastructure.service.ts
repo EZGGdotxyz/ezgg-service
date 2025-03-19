@@ -211,7 +211,7 @@ export class BlockChainService {
           tokenSymbol: tokenMetadata.symbol,
           tokenDecimals: tokenMetadata.decimals,
           logo: tokenMetadata.logo,
-          show: true,
+          show: false,
           sort: 0,
         });
       }
@@ -219,7 +219,14 @@ export class BlockChainService {
       let tokenPriceMap: Record<string, TokenPriceBySymbolResult> = {};
       const tokenSymbols = dataManyInput
         .filter((x) => !_.isEmpty(x.tokenSymbol))
-        .map((x) => x.tokenSymbol as string);
+        .map((x) => x.tokenSymbol as string)
+        .map((x) => {
+          if (x.indexOf("u") > -1) {
+            return x.replace("u", "");
+          } else {
+            return x;
+          }
+        });
       if (!_.isEmpty(tokenSymbols)) {
         const { data: tokenPriceResult } =
           await alchemy.prices.getTokenPriceBySymbol(tokenSymbols);
@@ -230,7 +237,13 @@ export class BlockChainService {
 
       for (const data of dataManyInput) {
         if (data.tokenSymbol && !_.isEmpty(data.tokenSymbol)) {
-          const tokenPrice = tokenPriceMap[data.tokenSymbol];
+          let tokenPrice;
+          if (data.tokenSymbol.indexOf("u") > -1) {
+            const k = data.tokenSymbol.replace("u", "");
+            tokenPrice = tokenPriceMap[k];
+          } else {
+            tokenPrice = tokenPriceMap[data.tokenSymbol];
+          }
           const price = tokenPrice?.prices.find((x) => x.currency === "usd");
           data.priceCurrency = price?.currency;
           data.priceValue = price?.value;

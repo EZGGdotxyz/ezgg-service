@@ -3,6 +3,7 @@ import "@nomicfoundation/hardhat-toolbox-viem";
 import "hardhat-chai-matchers-viem";
 import "hardhat-docgen";
 import "dotenv/config";
+import "./task/index";
 
 const config: HardhatUserConfig = {
   solidity: "0.8.28",

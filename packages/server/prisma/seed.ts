@@ -2,9 +2,12 @@ import {
   BIZ,
   BlockChainNetwork,
   BlockChainPlatform,
+  ERC,
   Prisma,
   PrismaClient,
 } from "@prisma/client";
+import { Alchemy, Network, TokenPriceBySymbolResult } from "alchemy-sdk";
+import * as _ from "radash";
 
 /**
  * 数据库初始化脚本
@@ -14,113 +17,77 @@ import {
 const prisma = new PrismaClient();
 
 async function main() {
-  const blockChainCount = await prisma.blockChain.count();
-  if (blockChainCount === 0) {
-    const data: Prisma.BlockChainCreateManyInput[] = [
-      {
-        platform: BlockChainPlatform.ETH,
-        network: BlockChainNetwork.MAIN,
-        chainId: 8453,
-        name: "Base Mainnet",
-        show: true,
-        sort: 0,
-        alchemyRpc: "https://base-mainnet.g.alchemy.com/v2",
-        alchemyNetwork: "base-mainnet",
-        tokenSymbol: "ETH",
-      },
-      {
-        platform: BlockChainPlatform.ETH,
-        network: BlockChainNetwork.MAIN,
-        chainId: 137,
-        name: "Polygon (Matic)",
-        show: true,
-        sort: 1,
-        alchemyRpc: "https://polygon-mainnet.g.alchemy.com/v2",
-        alchemyNetwork: "polygon-mainnet",
-        tokenSymbol: "MATIC",
-      },
-      {
-        platform: BlockChainPlatform.ETH,
-        network: BlockChainNetwork.MAIN,
-        chainId: 56,
-        name: "BNB Smart Chain",
-        show: true,
-        sort: 2,
-        alchemyRpc: "https://bnb-mainnet.g.alchemy.com/v2",
-        alchemyNetwork: "bnb-mainnet",
-        tokenSymbol: "BNB",
-      },
-      {
-        platform: BlockChainPlatform.ETH,
-        network: BlockChainNetwork.TEST,
-        chainId: 84532,
-        name: "Base Sepolia",
-        show: true,
-        sort: 3,
-        alchemyRpc: "https://base-sepolia.g.alchemy.com/v2",
-        alchemyNetwork: "base-sepolia",
-        tokenSymbol: "ETH",
-      },
-      {
-        platform: BlockChainPlatform.ETH,
-        network: BlockChainNetwork.TEST,
-        chainId: 80001,
-        name: "Polygon Mumbai",
-        show: true,
-        sort: 4,
-        alchemyRpc: "https://polygon-amoy.g.alchemy.com/v2",
-        alchemyNetwork: "polygon-amoy",
-        tokenSymbol: "MATIC",
-      },
-      {
-        platform: BlockChainPlatform.ETH,
-        network: BlockChainNetwork.TEST,
-        chainId: 97,
-        name: "BSC Testnet",
-        show: true,
-        sort: 5,
-        alchemyRpc: "https://bnb-testnet.g.alchemy.com/v2",
-        alchemyNetwork: "bnb-testnet",
-        tokenSymbol: "BNB",
-      },
-    ];
-    await prisma.blockChain.createMany({ data });
+  const alchemy = new Alchemy({
+    apiKey: "JbmHhrBLsn156IbRlVCyKEn-vBu7o2B8",
+    network: Network.BASE_MAINNET,
+  });
+  const newAddressList = [
+    "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+    "0x1cff25B095cf6595afAbe35Dd7e5348666e57C11",
+    "0x50c5725949A6F0c72E6C4a641F24049A917DB0Cb",
+    "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c",
+    "0xfb3CB973B2a9e2E09746393C59e7FB0d5189d290",
+    "0xd403D1624DAEF243FbcBd4A80d8A6F36afFe32b2",
+    "0x63706e401c06ac8513145b7687A14804d17f814b",
+  ];
+  const dataManyInput: Prisma.TokenContractCreateManyInput[] = [];
+  for (const address of newAddressList) {
+    const tokenMetadata = await alchemy.core.getTokenMetadata(address);
+    console.log(tokenMetadata);
+    dataManyInput.push({
+      address,
+      platform: BlockChainPlatform.ETH,
+      chainId: 8453,
+      network: BlockChainNetwork.MAIN,
+      erc: ERC.ERC20,
+      tokenName: tokenMetadata.name,
+      tokenSymbol: tokenMetadata.symbol,
+      tokenDecimals: tokenMetadata.decimals,
+      logo: tokenMetadata.logo,
+      show: true,
+      sort: 0,
+    });
   }
 
-  const bizContractCount = await prisma.bizContract.count();
-  if (bizContractCount === 0) {
-    // Base Sepolia 84532
-    const baseSepolia = await prisma.blockChain.findUnique({
-      where: {
-        platform_chainId: {
-          platform: BlockChainPlatform.ETH,
-          chainId: 84532,
-        },
-      },
+  let tokenPriceMap: Record<string, TokenPriceBySymbolResult> = {};
+  const tokenSymbols = dataManyInput
+    .filter((x) => !_.isEmpty(x.tokenSymbol))
+    .map((x) => x.tokenSymbol as string)
+    .map((x) => {
+      if (x.indexOf("u") > -1) {
+        return x.replace("u", "");
+      } else {
+        return x;
+      }
     });
-    if (baseSepolia) {
-      const prototype = {
-        platform: baseSepolia.platform,
-        chainId: baseSepolia.chainId,
-        network: baseSepolia.network,
-        enabled: true,
-        ver: 1,
-      };
-      await prisma.bizContract.createMany({
-        data: [
-          {
-            ...prototype,
-            business: BIZ.TRANSFER,
-            address: "0xb5E6435BAD8C89aE1743A6b397FA9AACb32a16b6",
-          },
-          {
-            ...prototype,
-            business: BIZ.LINK,
-            address: "0x469798aF201bec7ab2A7F9A58174EC730afE7016",
-          },
-        ],
-      });
+  if (!_.isEmpty(tokenSymbols)) {
+    const { data: tokenPriceResult } =
+      await alchemy.prices.getTokenPriceBySymbol(tokenSymbols);
+    tokenPriceMap = Object.fromEntries(
+      tokenPriceResult.map((x) => [x.symbol, x])
+    );
+  }
+
+  for (const data of dataManyInput) {
+    if (data.tokenSymbol && !_.isEmpty(data.tokenSymbol)) {
+      let tokenPrice;
+      if (data.tokenSymbol.indexOf("u") > -1) {
+        const k = data.tokenSymbol.replace("u", "");
+        tokenPrice = tokenPriceMap[k];
+      } else {
+        tokenPrice = tokenPriceMap[data.tokenSymbol];
+      }
+      const price = tokenPrice?.prices.find((x) => x.currency === "usd");
+      data.priceCurrency = price?.currency;
+      data.priceValue = price?.value;
+      data.priceUpdateAt = price?.lastUpdatedAt;
     }
+
+    if (!data.tokenDecimals || !data.priceValue) {
+      data.feeSupport = false;
+    }
+
+    await prisma.tokenContract.create({ data });
   }
 }
 

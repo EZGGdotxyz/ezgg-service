@@ -255,7 +255,7 @@ model TokenContract {
   sort Int
 
   /// 代币价格 - 币种
-  priceCurrency   String?   @default("USD") @db.VarChar(8)
+  priceCurrency   String?   @default("usd") @db.VarChar(8)
   /// 代币价格
   priceValue      String?
   /// 代币价格更新时间
