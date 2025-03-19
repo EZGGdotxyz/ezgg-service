@@ -109,6 +109,10 @@ export class BalanceService {
     const tokens: BalanceOutput["tokens"] = [];
     for (const { contractAddress, tokenBalance } of tokenBalances) {
       const token = tokenMap.get(getAddress(contractAddress))!;
+      if (token.tokenSymbol && token.tokenSymbol.length > 10) {
+        continue;
+      }
+
       const [tokenAmount, currencyAmount] = await this.formatAmount({
         currency,
         tokenBalance,
