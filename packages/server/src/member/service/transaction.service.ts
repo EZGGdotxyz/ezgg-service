@@ -467,6 +467,18 @@ export class TransactionHistoryService {
             { receiverMemberId: { in: memberIds } },
           ],
         },
+        {
+          OR: [
+            {
+              transactionHash: {
+                not: {
+                  equals: null,
+                },
+              },
+            },
+            { transactionCategory: TransactionCategory.REQUEST },
+          ],
+        },
       ],
     };
 

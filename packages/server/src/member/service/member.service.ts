@@ -134,26 +134,31 @@ export class MemberService {
           memberLinkedAccount: true,
         },
         where: {
-          id: {
-            in: memberIds,
-            not: memberId,
-          },
-          OR: [
-            {
-              memberLinkedAccount: {
-                some: {
-                  search: {
-                    contains: search,
-                  },
+          AND: {
+            id: {
+              in: memberIds,
+              not: memberId,
+            },
+            OR: [
+              {
+                memberLinkedAccount:
+                  (search?.length ?? 0) > 20
+                    ? {
+                        some: {
+                          search: {
+                            contains: search,
+                          },
+                        },
+                      }
+                    : undefined,
+              },
+              {
+                nickname: {
+                  contains: search,
                 },
               },
-            },
-            {
-              nickname: {
-                contains: search,
-              },
-            },
-          ],
+            ],
+          },
         },
         page,
         limit,
@@ -384,7 +389,10 @@ export const MemberSchemas = {
   MemberPageQuery: PageUtils.asPageable(
     z.object({
       search: z.string({ description: "检索条件" }).optional(),
-      recent: z.coerce.boolean({ description: "检索最近交易会员" }).optional(),
+      recent: z
+        .enum(["true", "false"], { description: "检索最近交易会员" })
+        .transform((val) => val === "true")
+        .optional(),
     })
   ),
   MemberPageResult: PageUtils.asPagedResult(

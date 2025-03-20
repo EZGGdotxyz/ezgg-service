@@ -110,6 +110,9 @@ export class BalanceService {
     for (const { contractAddress, tokenBalance } of tokenBalances) {
       const token = tokenMap.get(getAddress(contractAddress))!;
       if (
+        !token.tokenSymbol ||
+        _.isEmpty(token.tokenSymbol) ||
+        !token.tokenDecimals ||
         (token.tokenSymbol && token.tokenSymbol.length > 10) ||
         token.tokenSymbol === "WETH"
       ) {
