@@ -215,7 +215,7 @@ namespace UserOperation {
   }
   export class Erc20 {
     constructor(private readonly contractAddress: string) {}
-    approve(spenderAddress: string, amount: number): Op {
+    approve(spenderAddress: string, amount: bigint): Op {
       return {
         address: getAddress(this.contractAddress),
         value: 0n,
@@ -255,7 +255,7 @@ namespace UserOperation {
       txCode: string,
       receiverWalletAddress: string,
       tokenContractAddress: string,
-      amount: number
+      amount: bigint
     ): Op {
       return {
         address: getAddress(this.contractAddress),
@@ -297,7 +297,7 @@ namespace UserOperation {
       };
     }
     
-    deposit(txCode: string,tokenContractAddress: string, amount: number, otp: string): Op {
+    deposit(txCode: string,tokenContractAddress: string, amount: bigint, otp: string): Op {
       return {
         address: getAddress(this.contractAddress),
         value: 0n,

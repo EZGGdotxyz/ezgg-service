@@ -44,6 +44,13 @@ const app: FastifyPluginAsync<AppOptions> = async (
     constraints: {}, // optional: default {}
   });
 
+  // 设置全局序列化编译器
+  fastify.setSerializerCompiler(() => (data) => {
+    return JSON.stringify(data, (_, value) =>
+      typeof value === "bigint" ? value.toString() : value
+    );
+  });
+
   fastify.setErrorHandler((error, request, reply) => {
     if (error instanceof ServiceError) {
       reply.status(200).send(ApiUtils.error(error.code, error.message));

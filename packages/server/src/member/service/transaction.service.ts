@@ -567,7 +567,7 @@ export class TransactionHistoryService {
     for (const item of trans) {
       const tokenAmount = item.tokenDecimals
         ? formatUnits(BigInt(item.amount ?? "0"), item.tokenDecimals)
-        : item.amount ?? "0";
+        : String(item.amount) ?? "0";
       let currencyAmount = item.tokenPrice
         ? new Decimal(tokenAmount)
             .mul(new Decimal(item.tokenPrice))
