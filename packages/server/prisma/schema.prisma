@@ -404,7 +404,7 @@ model TransactionHistory {
   tokenFeeSupport      Boolean            @default(true) @db.UnsignedTinyInt
 
   /// 交易金额（代币数量）
-  amount BigInt @db.UnsignedBigInt
+  amount String @db.VarChar(255)
 
   /// 附带留言
   message String? @db.VarChar(255)

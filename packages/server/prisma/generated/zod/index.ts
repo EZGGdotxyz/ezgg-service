@@ -322,6 +322,7 @@ export const TransactionHistoryOrderByRelevanceFieldEnumSchema = z.enum([
   "tokenSymbol",
   "tokenContractAddress",
   "tokenPrice",
+  "amount",
   "message",
 ]);
 
@@ -1045,7 +1046,7 @@ export const TransactionHistorySchema = z.object({
   /**
    * 交易金额（代币数量）
    */
-  amount: z.bigint().describe("交易金额（代币数量）"),
+  amount: z.string().describe("交易金额（代币数量）"),
   /**
    * 附带留言
    */
