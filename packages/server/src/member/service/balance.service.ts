@@ -183,10 +183,13 @@ export class BalanceService {
     token: TokenContract | undefined;
   }): Promise<[string, string | undefined]> {
     let rate = 1;
-    if (currency != "USD") {
+    if (currency === "HKD" && token?.tokenSymbol === "HKC") {
+      rate = 1;
+    } else if (currency != "USD") {
       const exchangeRates = await this.openExchangeRates.latest();
       rate = exchangeRates.rates[currency] ?? 1;
     }
+
     const tokenAmount = token?.tokenDecimals
       ? formatUnits(BigInt(tokenBalance ?? "0"), token.tokenDecimals)
       : new Decimal(tokenBalance ?? "0").toString();
