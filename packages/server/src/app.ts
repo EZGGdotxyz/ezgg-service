@@ -67,6 +67,18 @@ const app: FastifyPluginAsync<AppOptions> = async (
     }
   });
 
+  fastify.addHook("preValidation", async (request) => {
+    request.log.info(
+      {
+        authorization: request.headers["authorization"],
+        method: request.method,
+        url: request.url,
+        body: request.body,
+      },
+      "Logging Request:"
+    );
+  });
+
   // Do not touch the following lines
 
   // This loads all plugins defined in plugins
