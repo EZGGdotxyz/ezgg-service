@@ -567,7 +567,7 @@ export class TransactionHistoryService {
     for (const item of trans) {
       const tokenAmount = item.tokenDecimals
         ? formatUnits(BigInt(item.amount ?? "0"), item.tokenDecimals)
-        : item.amount ?? "0";
+        : String(item.amount) ?? "0";
       let currencyAmount = item.tokenPrice
         ? new Decimal(tokenAmount)
             .mul(new Decimal(item.tokenPrice))
@@ -602,7 +602,7 @@ export const TransactionHistorySchemas = {
     transactionType: z.nativeEnum(TransactionType, { description: "交易类型" }),
     senderMemberId: z.number({ description: "付款人 - 会员id" }).optional(),
     receiverMemberId: z.number({ description: "收款人 - 会员id" }).optional(),
-    amount: z.number({ description: "交易金额（代币数量）" }),
+    amount: z.string({ description: "交易金额（代币数量）" }),
     message: z.string({ description: "附带留言" }).optional(),
     senderWalletAddress: z.string({ description: "付款人钱包地址" }).optional(),
     receiverWalletAddress: z

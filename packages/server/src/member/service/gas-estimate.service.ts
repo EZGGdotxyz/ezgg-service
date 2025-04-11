@@ -59,7 +59,7 @@ export class GasEstimateService {
       tokenTransfer: new UserOperation.TokenTransfer(trans.bizContractAddress!),
       tokenLink: new UserOperation.TokenLink(trans.bizContractAddress!),
     };
-    const calls = [ops.erc20.approve(trans.bizContractAddress!, trans.amount)];
+    const calls = [ops.erc20.approve(trans.bizContractAddress!, BigInt(trans.amount))];
     if (trans.transactionType !== TransactionType.PAY_LINK) {
       calls.push(
         ops.tokenTransfer.payFee(
@@ -71,7 +71,7 @@ export class GasEstimateService {
           trans.transactionCode,
           trans.receiverWalletAddress!,
           trans.tokenContractAddress!,
-          trans.amount
+          BigInt(trans.amount)
         )
       );
     } else {
@@ -85,7 +85,7 @@ export class GasEstimateService {
         ops.tokenLink.deposit(
           trans.transactionCode,
           trans.tokenContractAddress!,
-          trans.amount,
+          BigInt(trans.amount),
           hashKeccak256(otp)
         ),
         ops.tokenLink.withdraw(trans.transactionCode, trans.senderWalletAddress!, otp)
@@ -215,7 +215,7 @@ namespace UserOperation {
   }
   export class Erc20 {
     constructor(private readonly contractAddress: string) {}
-    approve(spenderAddress: string, amount: number): Op {
+    approve(spenderAddress: string, amount: bigint): Op {
       return {
         address: getAddress(this.contractAddress),
         value: 0n,
@@ -255,7 +255,7 @@ namespace UserOperation {
       txCode: string,
       receiverWalletAddress: string,
       tokenContractAddress: string,
-      amount: number
+      amount: bigint
     ): Op {
       return {
         address: getAddress(this.contractAddress),
@@ -297,7 +297,7 @@ namespace UserOperation {
       };
     }
     
-    deposit(txCode: string,tokenContractAddress: string, amount: number, otp: string): Op {
+    deposit(txCode: string,tokenContractAddress: string, amount: bigint, otp: string): Op {
       return {
         address: getAddress(this.contractAddress),
         value: 0n,

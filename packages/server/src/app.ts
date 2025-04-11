@@ -5,7 +5,7 @@ import fastifyStatic from "@fastify/static";
 import { FastifyPluginAsync, FastifyServerOptions } from "fastify";
 import { fileURLToPath } from "url";
 import {
-  serializerCompiler,
+  createSerializerCompiler,
   validatorCompiler,
 } from "fastify-type-provider-zod";
 import { ServiceError } from "./core/error.js";
@@ -35,7 +35,16 @@ const app: FastifyPluginAsync<AppOptions> = async (
   opts
 ): Promise<void> => {
   // Place here your custom code!
-  fastify.setSerializerCompiler(serializerCompiler);
+  const replacer: (this: any, key: string, value: any) => any = function (
+    _,
+    value
+  ) {
+    if (typeof value === "bigint") {
+      return value.toString();
+    }
+    return value;
+  };
+  fastify.setSerializerCompiler(createSerializerCompiler({ replacer }));
   fastify.setValidatorCompiler(validatorCompiler);
   fastify.register(fastifyCookie, {});
   fastify.register(fastifyStatic, {
@@ -56,6 +65,18 @@ const app: FastifyPluginAsync<AppOptions> = async (
         .status(200)
         .send(ApiUtils.error("50000", error.message ?? String(error)));
     }
+  });
+
+  fastify.addHook("preValidation", async (request) => {
+    request.log.info(
+      {
+        authorization: request.headers["authorization"],
+        method: request.method,
+        url: request.url,
+        body: request.body,
+      },
+      "Logging Request:"
+    );
   });
 
   // Do not touch the following lines

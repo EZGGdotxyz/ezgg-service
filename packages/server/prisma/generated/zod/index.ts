@@ -322,6 +322,7 @@ export const TransactionHistoryOrderByRelevanceFieldEnumSchema = z.enum([
   "tokenSymbol",
   "tokenContractAddress",
   "tokenPrice",
+  "amount",
   "message",
 ]);
 
@@ -1045,7 +1046,7 @@ export const TransactionHistorySchema = z.object({
   /**
    * 交易金额（代币数量）
    */
-  amount: z.number().int().describe("交易金额（代币数量）"),
+  amount: z.string().describe("交易金额（代币数量）"),
   /**
    * 附带留言
    */
@@ -1405,9 +1406,9 @@ export const TransactionFeeEstimateSchema = z.object({
    */
   totalWeiCost: z.string().describe("总费用(单位wei)"),
   /**
-   * 总���用(单位eth)
+   * 总费用(单位eth)
    */
-  totalEthCost: z.string().describe("总���用(单位eth)"),
+  totalEthCost: z.string().describe("总费用(单位eth)"),
   /**
    * 总费用(单位usd)
    */
