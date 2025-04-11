@@ -7,17 +7,17 @@ module.exports = (shipit) => {
   const util = require("util");
   const exec = util.promisify(require("child_process").exec);
 
-  // const rootPath = "./";
-  // const imageName = "crypto-transfer-server";
-  // const imageTag = "1.0.0";
-  // const imageTarfile = `docker-image-${imageName}-${imageTag}.tar`;
-  // const remotePath = "/app/srv/crypto-transfer-server";
-
   const rootPath = "./";
   const imageName = "crypto-transfer-server";
-  const imageTag = "2.0.0";
+  const imageTag = "1.0.0";
   const imageTarfile = `docker-image-${imageName}-${imageTag}.tar`;
-  const remotePath = "/app/srv/crypto-transfer-server-v2";
+  const remotePath = "/app/srv/crypto-transfer-server";
+
+  // const rootPath = "./";
+  // const imageName = "crypto-transfer-server";
+  // const imageTag = "2.0.0";
+  // const imageTarfile = `docker-image-${imageName}-${imageTag}.tar`;
+  // const remotePath = "/app/srv/crypto-transfer-server-v2";
 
   shipit.initConfig({
     default: {

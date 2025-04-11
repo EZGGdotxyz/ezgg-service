@@ -79,6 +79,8 @@ export class MemberService {
   }
 
   async syncLinkedAccounts({ user }: { user: User }): Promise<void> {
+    const userById = await this.privy.getUserById(user.id);
+
     const member = await this.prisma.member.findUnique({
       where: {
         did: user.id,
@@ -94,7 +96,7 @@ export class MemberService {
         },
       });
       const data: Prisma.MemberLinkedAccountCreateManyInput[] = [];
-      for (const linkedAccount of user.linkedAccounts) {
+      for (const linkedAccount of userById.linkedAccounts) {
         data.push({
           memberId: member.id,
           did: user.id,
