@@ -25,13 +25,33 @@ pnpm hardhat ignition deploy ignition/modules/TokenTransfer.ts --network polygon
 # Polygon Amoy上部署并验证TokenLink.sol
 pnpm hardhat ignition deploy ignition/modules/TokenLink.ts --network polygonAmoy --verify
 
-
 # BNB Testnet上部署并验证FeeMaster.sol
 pnpm hardhat ignition deploy ignition/modules/FeeMaster.ts --network bnbTestnet --verify
 # BNB Testnet上部署并验证TokenTransfer.sol
 pnpm hardhat ignition deploy ignition/modules/TokenTransfer.ts --network bnbTestnet --verify
 # BNB Testnet上部署并验证TokenLink.sol
 pnpm hardhat ignition deploy ignition/modules/TokenLink.ts --network bnbTestnet --verify
+
+# Monad Testnet上部署并验证FeeMaster.sol
+pnpm hardhat ignition deploy ignition/modules/FeeMaster.ts --network monadTestnet --verify
+# Monad Testnet上部署并验证TokenTransfer.sol
+pnpm hardhat ignition deploy ignition/modules/TokenTransfer.ts --network monadTestnet --verify
+# Monad Testnet上部署并验证TokenLink.sol
+pnpm hardhat ignition deploy ignition/modules/TokenLink.ts --network monadTestnet --verify
+
+# Arbitrum Sepolia上部署并验证FeeMaster.sol
+pnpm hardhat ignition deploy ignition/modules/FeeMaster.ts --network arbitrumSepolia --verify
+# Arbitrum Sepolia上部署并验证TokenTransfer.sol
+pnpm hardhat ignition deploy ignition/modules/TokenTransfer.ts --network arbitrumSepolia --verify
+# Arbitrum Sepolia上部署并验证TokenLink.sol
+pnpm hardhat ignition deploy ignition/modules/TokenLink.ts --network arbitrumSepolia --verify
+
+# Scroll Sepolia 上部署并验证FeeMaster.sol
+pnpm hardhat ignition deploy ignition/modules/FeeMaster.ts --network scrollSepolia --verify
+# Scroll Sepolia 上部署并验证TokenTransfer.sol
+pnpm hardhat ignition deploy ignition/modules/TokenTransfer.ts --network scrollSepolia --verify
+# Scroll Sepolia 上部署并验证TokenLink.sol
+pnpm hardhat ignition deploy ignition/modules/TokenLink.ts --network scrollSepolia --verify
 
 # BASE 上部署并验证FeeMaster.sol
 pnpm hardhat ignition deploy ignition/modules/FeeMaster.ts --network base --verify

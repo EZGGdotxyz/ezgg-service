@@ -32,6 +32,30 @@ const config: HardhatUserConfig = {
         ? [process.env.DEPLOYER_PRIVATE_KEY]
         : [],
     },
+    monadTestnet: {
+      chainId: 10143,
+      url: `https://monad-testnet.g.alchemy.com/v2/${process.env
+        .ALCHEMY_API_KEY!}`,
+      accounts: process.env.DEPLOYER_PRIVATE_KEY
+        ? [process.env.DEPLOYER_PRIVATE_KEY]
+        : [],
+    },
+    arbitrumSepolia: {
+      chainId: 421614,
+      url: `https://arb-sepolia.g.alchemy.com/v2/${process.env
+        .ALCHEMY_API_KEY!}`,
+      accounts: process.env.DEPLOYER_PRIVATE_KEY
+        ? [process.env.DEPLOYER_PRIVATE_KEY]
+        : [],
+    },
+    scrollSepolia: {
+      chainId: 534351,
+      url: `https://scroll-sepolia.g.alchemy.com/v2/${process.env
+        .ALCHEMY_API_KEY!}`,
+      accounts: process.env.DEPLOYER_PRIVATE_KEY
+        ? [process.env.DEPLOYER_PRIVATE_KEY]
+        : [],
+    },
     base: {
       chainId: 8453,
       url: `https://base-mainnet.g.alchemy.com/v2/${process.env
@@ -42,10 +66,13 @@ const config: HardhatUserConfig = {
     },
   },
   etherscan: {
+    enabled: true,
     apiKey: {
       baseSepolia: process.env.BASE_TESTNET_SCAN_API_KEY!,
       polygonAmoy: process.env.POLYGON_TESTNET_SCAN_API_KEY!,
       bnbTestnet: process.env.BNB_TESTNET_SCAN_API_KEY!,
+      arbitrumSepolia: process.env.ARBITRUM_TESTNET_SCAN_API_KEY!,
+      scrollSepolia: process.env.SCROLL_TESTNET_SCAN_API_KEY!,
       base: process.env.BASE_TESTNET_SCAN_API_KEY!,
     },
     customChains: [
@@ -74,6 +101,22 @@ const config: HardhatUserConfig = {
         },
       },
       {
+        network: "arbitrumSepolia",
+        chainId: 421614,
+        urls: {
+          apiURL: "https://api-sepolia.arbiscan.io/api",
+          browserURL: "https://sepolia.arbiscan.io/",
+        },
+      },
+      {
+        network: "scrollSepolia",
+        chainId: 534351,
+        urls: {
+          apiURL: "https://api-sepolia.scrollscan.com/api",
+          browserURL: "https://sepolia.scrollscan.com/",
+        },
+      },
+      {
         network: "base",
         chainId: 8453,
         urls: {
@@ -82,6 +125,11 @@ const config: HardhatUserConfig = {
         },
       },
     ],
+  },
+  sourcify: {
+    enabled: true,
+    apiUrl: "https://sourcify-api-monad.blockvision.org",
+    browserUrl: "https://testnet.monadexplorer.com",
   },
   docgen: {
     path: "./docs", // 输出目录

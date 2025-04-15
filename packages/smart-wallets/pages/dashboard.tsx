@@ -4,7 +4,7 @@ import Head from "next/head";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { encodeFunctionData, erc721Abi, erc20Abi, createPublicClient, http, getAddress, Chain, Hex } from "viem";
-import { baseSepolia, polygonAmoy, bscTestnet } from "viem/chains";
+import { baseSepolia, polygonAmoy, bscTestnet, arbitrumSepolia } from "viem/chains";
 import { memberApi } from "../api/member";
 import { transactionApi } from "../api/transaction";
 import TokenTransferContract from '../public/abi/TokenTransfer.json'
@@ -15,9 +15,9 @@ import { infrastructureApi } from "../api/infrastructure.api";
 import { createBicoPaymasterClient, createSmartAccountClient, NexusClient, toNexusAccount } from "@biconomy/abstractjs";
 import {createWalletClient, custom} from 'viem';
 
-const defaultChainId = 84532
-const chain: Chain = baseSepolia;
-const USDC_ADDRESS = "0x036CbD53842c5426634e7929541eC2318f3dCF7e" as const;
+// const defaultChainId = 84532
+// const chain: Chain = baseSepolia;
+// const USDC_ADDRESS = "0x036CbD53842c5426634e7929541eC2318f3dCF7e" as const;
 
 // const defaultChainId = 80002
 // const chain: Chain = polygonAmoy;
@@ -26,6 +26,10 @@ const USDC_ADDRESS = "0x036CbD53842c5426634e7929541eC2318f3dCF7e" as const;
 // const defaultChainId = 97
 // const chain: Chain = bscTestnet;
 // const USDC_ADDRESS = "0x64544969ed7EBf5f083679233325356EbE738930" as const;
+
+const defaultChainId = 421614
+const chain: Chain = arbitrumSepolia;
+const USDC_ADDRESS = "0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d" as const;
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -259,7 +263,7 @@ export default function DashboardPage() {
         transactionCategory: TransactionCategory.SEND,
         transactionType: TransactionType.SEND,
         receiverMemberId: selectedMember,
-        amount: amountInUsdc,
+        amount: String(amountInUsdc),
         message: `Transfer to: ${selectedMember} Amount: ${transferAmount} USDC`,
       });
 
@@ -294,6 +298,17 @@ export default function DashboardPage() {
     //   maxPriorityFeePerGas: 0n,
     // })
     // console.log(estimate)
+
+    const isAADeployed = await smartWalletClient.account.isDeployed()
+    console.log("AA20 Account Deployment:", isAADeployed);
+    if(!isAADeployed) {
+      const txHash = await smartWalletClient.sendTransaction({
+        to: "0x0000000000000000000000000000000000000000", // 发送给 0 地址
+        value: 0n, // 0 ETH
+        gas: 21000n, // 21000
+      });
+      console.log("AA20 Account Deployment TX:", txHash);
+    }
 
     const {data: transactionFeeEstimate} = await transactionApi
     .updateNetworkFee({
@@ -409,7 +424,7 @@ export default function DashboardPage() {
         tokenContractAddress: USDC_ADDRESS,
         transactionCategory: TransactionCategory.SEND,
         transactionType: TransactionType.PAY_LINK,
-        amount: depositAmount * 1e6,
+        amount: String(depositAmount * 1e6),
         message: `Pay Link Deposit: ${depositAmount} USDC`,
       });
 
@@ -422,6 +437,17 @@ export default function DashboardPage() {
       const tokenContractAddress = getAddress(payLink.tokenContractAddress!);
       // PayLink业务合约地址
       const bizContractAddress = getAddress(payLink.bizContractAddress);
+
+      const isAADeployed = await smartWalletClient.account.isDeployed()
+      console.log("AA20 Account Deployment:", isAADeployed);
+      if(!isAADeployed) {
+        const txHash = await smartWalletClient.sendTransaction({
+          to: "0x0000000000000000000000000000000000000000", // 发送给 0 地址
+          value: 0n, // 0 ETH
+          gas: 21000n, // 21000
+        });
+        console.log("AA20 Account Deployment TX:", txHash);
+      }
 
       // 3. 计算手续费
       const {data: transactionFeeEstimate} = await transactionApi

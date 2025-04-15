@@ -61,7 +61,7 @@ export declare namespace API {
     transactionCategory: TransactionCategory;
     transactionType: TransactionType;
     receiverMemberId?: number;
-    amount: number;
+    amount: string;
     message?: string;
   };
 
