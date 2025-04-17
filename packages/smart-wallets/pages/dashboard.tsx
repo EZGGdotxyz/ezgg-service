@@ -73,12 +73,30 @@ USDC_ADDRESS.set(10143, {
 });
 // scrollSepolia
 USDC_ADDRESS.set(534351, {
-  address: "0x0",
+  address: "0x7878290DB8C4f02bd06E0E249617871c19508bE6",
   decimals: 1e6,
 });
 
-const bundlerUrl = (chainId: number) => `https://bundler.biconomy.io/api/v3/${chainId}/nJPK7B3ru.dd7f7861-190d-41bd-af80-6877f74b8f44`
-const paymasterUrl = (chainId: number) => `https://paymaster.biconomy.io/api/v2/${chainId}/9Yzu5pN8q.f2b8eeaa-1320-44d5-ad12-9bf5c2cdc189`
+const bundlerUrl = (chainId: number) => {
+  switch (chainId) {
+    case 97:
+      return `https://bundler.biconomy.io/api/v3/${chainId}/nJPK7B3ru.dd7f7861-190d-41bd-af80-6877f74b8f44`
+    case 534351:
+      return `https://bundler.biconomy.io/api/v2/${chainId}/nJPK7B3ru.dd7f7861-190d-41bd-af80-6877f74b8f44`
+    default:
+      return `https://bundler.biconomy.io/api/v3/${chainId}/nJPK7B3ru.dd7f7861-190d-41bd-af80-6877f74b8f44`
+  }
+}
+const paymasterUrl = (chainId: number) => {
+  switch (chainId) {
+    case 97:
+      return `https://paymaster.biconomy.io/api/v2/${chainId}/9Yzu5pN8q.f2b8eeaa-1320-44d5-ad12-9bf5c2cdc189`
+    case 534351:
+      return `https://paymaster.biconomy.io/api/v2/${chainId}/XXTqovaTm.2a644550-a89b-470b-9f95-bedf7a3fb197`
+    default:
+      return `https://paymaster.biconomy.io/api/v2/${chainId}/9Yzu5pN8q.f2b8eeaa-1320-44d5-ad12-9bf5c2cdc189`
+  }
+}
 
 const getNexusClient = async (embeddedWallet: ConnectedWallet, chainId: number) => {
   const chain = chains.find((x) => x.id == chainId);

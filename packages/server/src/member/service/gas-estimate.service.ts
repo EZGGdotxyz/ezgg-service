@@ -92,7 +92,7 @@ export class GasEstimateService {
       );
     }
 
-    const { preVerificationGas, verificationGasLimit, callGasLimit } = trans.chainId !== 97  ?
+    const { preVerificationGas, verificationGasLimit, callGasLimit } = (trans.chainId !== 97 && trans.chainId !== 534351) ?
       await simpleAccountHandler.estimateUserOperationGas({
         sender: getAddress(trans.senderWalletAddress!),
         calls,

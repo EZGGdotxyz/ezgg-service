@@ -34,8 +34,7 @@ const config: HardhatUserConfig = {
     },
     monadTestnet: {
       chainId: 10143,
-      url: `https://monad-testnet.g.alchemy.com/v2/${process.env
-        .ALCHEMY_API_KEY!}`,
+      url: "https://testnet-rpc.monad.xyz",
       accounts: process.env.DEPLOYER_PRIVATE_KEY
         ? [process.env.DEPLOYER_PRIVATE_KEY]
         : [],
@@ -66,7 +65,7 @@ const config: HardhatUserConfig = {
     },
   },
   etherscan: {
-    enabled: true,
+    enabled: false,
     apiKey: {
       baseSepolia: process.env.BASE_TESTNET_SCAN_API_KEY!,
       polygonAmoy: process.env.POLYGON_TESTNET_SCAN_API_KEY!,
