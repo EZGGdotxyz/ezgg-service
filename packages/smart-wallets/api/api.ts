@@ -31,6 +31,20 @@ export declare namespace API {
   // 补充分页结果类型（如果尚未存在）
   export type PagedMemberResult = PagedResult<Member>;
 
+  export type FindMemberSmartWalletInput = {
+    platform: BlockChainPlatform;
+    chainId: number;
+    did: string;
+  };
+
+  export type UpdateMemberSmartWalletInput = {
+    smartWallet: {
+      platform: BlockChainPlatform;
+      chainId: number;
+      address: string;
+    }[];
+  };
+
   export type TransactionHistory = {
     id: number;
     transactionCode: string;
@@ -123,6 +137,7 @@ export declare namespace API {
     explorerUrl: string;
     sort: number;
     show: boolean;
+    smartWalletType: BlockChainSmartWalletType;
   };
 
   export type TokenContract = {
@@ -243,4 +258,9 @@ export enum BIZ {
   LINK = "LINK",
   VAULT = "VAULT",
   TRANSFER = "TRANSFER",
+}
+
+export enum BlockChainSmartWalletType {
+  PRIVY = "PRIVY",
+  BICONOMY = "BICONOMY",
 }

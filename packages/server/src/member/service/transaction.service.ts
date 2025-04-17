@@ -121,6 +121,8 @@ export class TransactionHistoryService {
       }
       const senderWalletAddress =
         await this.memberService.findSmartWalletAddress({
+          platform,
+          chainId,
           did: senderMember.did,
         });
       if (!senderWalletAddress || _.isEmpty(senderWalletAddress)) {
@@ -147,6 +149,8 @@ export class TransactionHistoryService {
       }
       const receiverWalletAddress =
         await this.memberService.findSmartWalletAddress({
+          platform,
+          chainId,
           did: receiverMember.did,
         });
       if (!receiverWalletAddress || _.isEmpty(receiverWalletAddress)) {
@@ -177,6 +181,8 @@ export class TransactionHistoryService {
         }
         const senderWalletAddress =
           await this.memberService.findSmartWalletAddress({
+            platform,
+            chainId,
             did: senderMember.did,
           });
         if (!senderWalletAddress || _.isEmpty(senderWalletAddress)) {
@@ -195,6 +201,8 @@ export class TransactionHistoryService {
       }
       const receiverWalletAddress =
         await this.memberService.findSmartWalletAddress({
+          platform,
+          chainId,
           did: receiverMember.did,
         });
       if (!receiverWalletAddress || _.isEmpty(receiverWalletAddress)) {
@@ -259,6 +267,8 @@ export class TransactionHistoryService {
       }
       const senderWalletAddress =
         await this.memberService.findSmartWalletAddress({
+          platform: trans.platform,
+          chainId: trans.chainId,
           did: senderMember.did,
         });
       if (!senderWalletAddress || _.isEmpty(senderWalletAddress)) {
@@ -324,6 +334,8 @@ export class TransactionHistoryService {
       if (senderMember) {
         const senderWalletAddress =
           await this.memberService.findSmartWalletAddress({
+            platform: transactionHistory.platform,
+            chainId: transactionHistory.chainId,
             did: senderMember.did,
           });
         if (!senderWalletAddress || _.isEmpty(senderWalletAddress)) {

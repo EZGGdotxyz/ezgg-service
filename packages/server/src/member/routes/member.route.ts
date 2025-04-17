@@ -61,6 +61,56 @@ const route: FastifyPluginAsyncZod = async (fastify) => {
       )
   );
 
+  fastify.post(
+    "/update-member-smart-wallet",
+    {
+      schema: {
+        tags: [TAG],
+        summary: "同步智能钱包地址",
+        security: [{ authorization: [] }],
+        body: MemberSchemas.UpdateMemberSmartWalletInput,
+        response: {
+          200: ApiUtils.asApiResult(z.void()),
+        },
+      },
+      onRequest: [fastify.privyAuth],
+    },
+    async (request) =>
+      ApiUtils.ok(
+        await fastify.diContainer
+          .get<MemberService>(Symbols.MemberService)
+          .updateMemberSmartWallet({
+            ...request.body,
+            memberId: request.privyUser?.customMetadata.id! as number,
+          })
+      )
+  );
+
+  fastify.get(
+    "/find-smart-wallet-address",
+    {
+      schema: {
+        tags: [TAG],
+        summary: "同步智能钱包地址",
+        security: [{ authorization: [] }],
+        querystring: MemberSchemas.FindMemberSmartWalletInput,
+        response: {
+          200: ApiUtils.asApiResult(z.string().nullable()),
+        },
+      },
+      onRequest: [fastify.privyAuth],
+    },
+    async (request) =>
+      ApiUtils.ok(
+        await fastify.diContainer
+          .get<MemberService>(Symbols.MemberService)
+          .findSmartWalletAddress({
+            ...request.query,
+            did: request.privyUser?.id!,
+          })
+      )
+  );
+
   fastify.get(
     "/find-user",
     {

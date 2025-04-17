@@ -25,12 +25,14 @@ import {
 } from "@privy-io/server-auth";
 import { z } from "zod";
 import {
+  BlockChainPlatform,
+  BlockChainSmartWalletType,
   Member,
   MemberRecentAction,
   Prisma,
   TransactionHistory,
 } from "@prisma/client";
-import { DATA_NOT_EXIST } from "../../core/error.js";
+import { DATA_NOT_EXIST, UNEXPECTED } from "../../core/error.js";
 import { PagedResult, PageUtils } from "../../core/model.js";
 import {
   MemberLinkedAccountSchema,
@@ -272,12 +274,45 @@ export class MemberService {
   }
 
   async findSmartWalletAddress({
+    platform,
+    chainId,
     did,
-  }: {
-    did: string;
-  }): Promise<string | null> {
-    const user = await this.privy.getUserById(did);
-    return user.smartWallet?.address ?? null;
+  }: FindMemberSmartWalletInput): Promise<string | null> {
+    const chain = await this.prisma.blockChain.findUnique({
+      where: {
+        platform_chainId: {
+          platform,
+          chainId,
+        },
+      },
+    });
+    if (!chain) {
+      throw DATA_NOT_EXIST({ message: "chain not existed" });
+    }
+    const member = await this.prisma.member.findUnique({
+      where: {
+        did,
+      },
+    });
+    if (!member) {
+      throw DATA_NOT_EXIST({ message: "member not existed" });
+    }
+
+    if (chain.smartWalletType === BlockChainSmartWalletType.PRIVY) {
+      const user = await this.privy.getUserById(did);
+      return user.smartWallet?.address ?? null;
+    } else {
+      const memberSmartWallet = await this.prisma.memberSmartWallet.findUnique({
+        where: {
+          platform_chainId_memberId: {
+            platform,
+            memberId: member.id,
+            chainId,
+          },
+        },
+      });
+      return memberSmartWallet?.address ?? null;
+    }
   }
 
   async updateMemberRecent({
@@ -329,6 +364,39 @@ export class MemberService {
           memberId,
           relateMemberId,
           action: action!,
+        },
+      });
+    }
+  }
+
+  async updateMemberSmartWallet({
+    memberId,
+    smartWallet,
+  }: UpdateMemberSmartWalletInput) {
+    const { did } = (await this.findMember({ id: memberId })) ?? {};
+    if (!did) {
+      throw UNEXPECTED({ message: "member not exist" });
+    }
+    for (const { platform, chainId, address } of smartWallet) {
+      const existed = await this.prisma.memberSmartWallet.findUnique({
+        where: {
+          platform_chainId_memberId: {
+            platform,
+            memberId,
+            chainId,
+          },
+        },
+      });
+      if (existed) {
+        continue;
+      }
+      await this.prisma.memberSmartWallet.create({
+        data: {
+          platform,
+          memberId,
+          did,
+          chainId,
+          address,
         },
       });
     }
@@ -405,6 +473,24 @@ export const MemberSchemas = {
   MemberOutput: MemberSchema.extend({
     memberLinkedAccount: z.array(MemberLinkedAccountOutput),
   }),
+  UpdateMemberSmartWalletInput: z.object({
+    smartWallet: z.array(
+      z.object({
+        platform: z.nativeEnum(BlockChainPlatform, {
+          description: "区块链平台",
+        }),
+        chainId: z.number({ description: "区块链ID" }),
+        address: z.string({ description: "智能钱包地址" }),
+      })
+    ),
+  }),
+  FindMemberSmartWalletInput: z.object({
+    platform: z.nativeEnum(BlockChainPlatform, {
+      description: "区块链平台",
+    }),
+    chainId: z.coerce.number({ description: "区块链ID" }),
+    did: z.string({ description: "Privy会员ID" }),
+  }),
 };
 
 export type UpdateMemberInput = {
@@ -421,6 +507,16 @@ export type CustomerMeteData = {
   nickname?: string;
   avatar?: string;
 };
+
+export type UpdateMemberSmartWalletInput = z.infer<
+  typeof MemberSchemas.UpdateMemberSmartWalletInput
+> & {
+  memberId: number;
+};
+
+export type FindMemberSmartWalletInput = z.infer<
+  typeof MemberSchemas.FindMemberSmartWalletInput
+>;
 
 // @privy-io/server-auth 包未导出该类型，拷贝到此
 interface SmartWallet {

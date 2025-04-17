@@ -34,6 +34,8 @@ const route: FastifyPluginAsyncZod = async (fastify) => {
         Symbols.MemberService
       );
       const smartWalletAddress = await memberService.findSmartWalletAddress({
+        platform: request.query.platform,
+        chainId: request.query.chainId,
         did: request.privyUser!.id,
       });
       if (!smartWalletAddress) {
@@ -71,6 +73,8 @@ const route: FastifyPluginAsyncZod = async (fastify) => {
         Symbols.MemberService
       );
       const smartWalletAddress = await memberService.findSmartWalletAddress({
+        platform: request.query.platform,
+        chainId: request.query.chainId,
         did: request.privyUser!.id,
       });
       if (!smartWalletAddress) {

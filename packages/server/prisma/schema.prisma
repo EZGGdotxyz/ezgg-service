@@ -149,6 +149,39 @@ model MemberLinkedAccount {
   @@map("member_linked_account")
 }
 
+model MemberSmartWallet {
+  /// 主键
+  id       Int       @id @default(autoincrement()) @db.UnsignedInt
+  /// 是否删除 @zod.custom.omit(["model"])
+  deleted  Int       @default(0) @db.UnsignedInt
+  /// 创建人 id
+  createBy Int       @default(0) @db.UnsignedInt
+  /// 修改人 id
+  updateBy Int       @default(0) @db.UnsignedInt
+  /// 创建时间
+  createAt DateTime  @default(now())
+  /// 修改时间
+  updateAt DateTime  @default(now()) @updatedAt
+  /// 删除时间 @zod.custom.omit(["model"])
+  deleteAt DateTime?
+
+  /// 用户id
+  memberId Int    @db.UnsignedInt
+  /// Privy User DID
+  did      String @db.VarChar(64)
+
+  /// 区块链平台
+  platform BlockChainPlatform
+  /// 区块链id
+  chainId  Int
+
+  /// 智能钱包地址
+  address String @db.VarChar(255)
+
+  @@unique([platform, chainId, memberId])
+  @@map("member_smart_wallet")
+}
+
 enum BlockChainPlatform {
   ETH
   SOLANA
@@ -209,8 +242,18 @@ model BlockChain {
   /// 原生代币价格（美元）
   tokenPrice  String?
 
+  /// 当前链上用户智能钱包类型： PRIVY、BICONOMY
+  smartWalletType BlockChainSmartWalletType @default(PRIVY)
+
   @@unique([platform, chainId])
   @@map("block_chain")
+}
+
+enum BlockChainSmartWalletType {
+  /// privy.io 智能钱包
+  PRIVY
+  /// biconomy.io 智能钱包
+  BICONOMY
 }
 
 /// 代币合约信息

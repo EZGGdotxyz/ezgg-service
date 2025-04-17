@@ -1,5 +1,4 @@
 import { z } from "zod";
-// import type { Prisma } from '@prisma/client';
 
 /////////////////////////////////////////
 // HELPER FUNCTIONS
@@ -76,6 +75,21 @@ export const MemberLinkedAccountScalarFieldEnumSchema = z.enum([
   "search",
 ]);
 
+export const MemberSmartWalletScalarFieldEnumSchema = z.enum([
+  "id",
+  "deleted",
+  "createBy",
+  "updateBy",
+  "createAt",
+  "updateAt",
+  "deleteAt",
+  "memberId",
+  "did",
+  "platform",
+  "chainId",
+  "address",
+]);
+
 export const BlockChainScalarFieldEnumSchema = z.enum([
   "id",
   "deleted",
@@ -94,6 +108,7 @@ export const BlockChainScalarFieldEnumSchema = z.enum([
   "alchemyNetwork",
   "tokenSymbol",
   "tokenPrice",
+  "smartWalletType",
 ]);
 
 export const TokenContractScalarFieldEnumSchema = z.enum([
@@ -293,6 +308,11 @@ export const MemberLinkedAccountOrderByRelevanceFieldEnumSchema = z.enum([
   "search",
 ]);
 
+export const MemberSmartWalletOrderByRelevanceFieldEnumSchema = z.enum([
+  "did",
+  "address",
+]);
+
 export const BlockChainOrderByRelevanceFieldEnumSchema = z.enum([
   "name",
   "alchemyRpc",
@@ -387,6 +407,12 @@ export type ERCType = `${z.infer<typeof ERCSchema>}`;
 export const BIZSchema = z.enum(["LINK", "VAULT", "TRANSFER"]);
 
 export type BIZType = `${z.infer<typeof BIZSchema>}`;
+
+export const BlockChainSmartWalletTypeSchema = z.enum(["PRIVY", "BICONOMY"]);
+
+export type BlockChainSmartWalletTypeType = `${z.infer<
+  typeof BlockChainSmartWalletTypeSchema
+>}`;
 
 export const TransactionStatusSchema = z.enum([
   "PENDING",
@@ -659,6 +685,63 @@ export const MemberLinkedAccountSchema = z.object({
 export type MemberLinkedAccount = z.infer<typeof MemberLinkedAccountSchema>;
 
 /////////////////////////////////////////
+// MEMBER SMART WALLET SCHEMA
+/////////////////////////////////////////
+
+export const MemberSmartWalletSchema = z.object({
+  /**
+   * 区块链平台
+   */
+  platform: BlockChainPlatformSchema.describe("区块链平台"),
+  /**
+   * 主键
+   */
+  id: z.number().int().describe("主键"),
+  /**
+   * 是否删除
+   */
+  // omitted: deleted: z.number().int().describe("是否删除"),
+  /**
+   * 创建人 id
+   */
+  createBy: z.number().int().describe("创建人 id"),
+  /**
+   * 修改人 id
+   */
+  updateBy: z.number().int().describe("修改人 id"),
+  /**
+   * 创建时间
+   */
+  createAt: z.coerce.date().describe("创建时间"),
+  /**
+   * 修改时间
+   */
+  updateAt: z.coerce.date().describe("修改时间"),
+  /**
+   * 删除时间
+   */
+  // omitted: deleteAt: z.coerce.date().nullable().describe("删除时间"),
+  /**
+   * 用户id
+   */
+  memberId: z.number().int().describe("用户id"),
+  /**
+   * Privy User DID
+   */
+  did: z.string().describe("Privy User DID"),
+  /**
+   * 区块链id
+   */
+  chainId: z.number().int().describe("区块链id"),
+  /**
+   * 智能钱包地址
+   */
+  address: z.string().describe("智能钱包地址"),
+});
+
+export type MemberSmartWallet = z.infer<typeof MemberSmartWalletSchema>;
+
+/////////////////////////////////////////
 // BLOCK CHAIN SCHEMA
 /////////////////////////////////////////
 
@@ -674,6 +757,12 @@ export const BlockChainSchema = z.object({
    * 区块链网络
    */
   network: BlockChainNetworkSchema.describe("区块链网络"),
+  /**
+   * 当前链上用户智能钱包类型： PRIVY、BICONOMY
+   */
+  smartWalletType: BlockChainSmartWalletTypeSchema.describe(
+    "当前链上用户智能钱包类型： PRIVY、BICONOMY"
+  ),
   /**
    * 主键
    */

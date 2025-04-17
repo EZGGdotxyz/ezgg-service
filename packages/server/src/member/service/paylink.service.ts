@@ -99,6 +99,8 @@ export class PayLinkService {
       throw PARAMETER_ERROR({ message: "member not exist" });
     }
     const smartWalletAddress = await this.memberService.findSmartWalletAddress({
+      platform: transactionHistory.platform,
+      chainId: transactionHistory.chainId,
       did: member.did,
     });
 

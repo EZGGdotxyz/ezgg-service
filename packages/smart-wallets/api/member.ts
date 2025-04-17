@@ -18,4 +18,14 @@ export const memberApi = {
     params: API.MemberPageQuery
   ): Promise<API.Response<API.PagedMemberResult>> =>
     apiClient.get("/member/user/page-member", { params }),
+
+  findSmartWalletAddress: (
+    params: API.FindMemberSmartWalletInput
+  ): Promise<API.Response<string>> =>
+    apiClient.get("/member/user/find-smart-wallet-address", { params }),
+
+  updateMemberSmartWallet: (
+    data: API.UpdateMemberSmartWalletInput
+  ): Promise<API.Response<void>> =>
+    apiClient.post("/member/user/update-member-smart-wallet", data),
 };
