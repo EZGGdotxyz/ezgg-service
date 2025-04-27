@@ -81,7 +81,7 @@ const route: FastifyPluginAsyncZod = async (fastify) => {
           .get<MemberService>(Symbols.MemberService)
           .updateMemberSmartWallet({
             ...request.body,
-            memberId: request.privyUser?.customMetadata.id! as number,
+            user: request.privyUser!,
           })
       )
   );

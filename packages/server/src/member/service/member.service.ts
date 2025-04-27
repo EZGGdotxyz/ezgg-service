@@ -370,11 +370,15 @@ export class MemberService {
   }
 
   async updateMemberSmartWallet({
-    memberId,
+    user,
     smartWallet,
   }: UpdateMemberSmartWalletInput) {
-    const { did } = (await this.findMember({ id: memberId })) ?? {};
-    if (!did) {
+    const member = await this.prisma.member.findUnique({
+      where: {
+        did: user.id,
+      },
+    });
+    if (!member) {
       throw UNEXPECTED({ message: "member not exist" });
     }
     for (const { platform, chainId, address } of smartWallet) {
@@ -382,7 +386,7 @@ export class MemberService {
         where: {
           platform_chainId_memberId: {
             platform,
-            memberId,
+            memberId: member.id,
             chainId,
           },
         },
@@ -393,8 +397,8 @@ export class MemberService {
       await this.prisma.memberSmartWallet.create({
         data: {
           platform,
-          memberId,
-          did,
+          memberId: member.id,
+          did: member.did,
           chainId,
           address,
         },
@@ -511,7 +515,7 @@ export type CustomerMeteData = {
 export type UpdateMemberSmartWalletInput = z.infer<
   typeof MemberSchemas.UpdateMemberSmartWalletInput
 > & {
-  memberId: number;
+  user: User;
 };
 
 export type FindMemberSmartWalletInput = z.infer<
